@@ -44,6 +44,7 @@
 #include "expr.h"
 #include "module.h"
 #include "sym.h"
+#include "profile/ispc_profile_info.h"
 #include <map>
 #include <llvm/Support/Dwarf.h>
 #if defined(LLVM_3_2)
@@ -1633,6 +1634,16 @@ FunctionEmitContext::AddInstrumentationPoint(const char *note) {
 
     llvm::Function *finst = m->module->getFunction("ISPCInstrument");
     CallInst(finst, NULL, args, "");
+}
+
+
+void
+FunctionEmitContext::AddProfilePoint(ISPCProfileInfo *info) {
+    AssertPos(currentPos, info != NULL);
+    if (!g->emitProfile)
+        return;
+
+    // TODO implement
 }
 
 

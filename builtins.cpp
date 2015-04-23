@@ -757,6 +757,9 @@ lSetInternalFunctions(llvm::Module *module) {
         "ISPCLaunch",
         "ISPCSync",
 //#endif /* ISPC_NVPTX_ENABLED */
+#ifndef ISPC_NVPTX_ENABLED
+        "ISPCProfile",
+#endif /* ISPC_NVPTX_ENABLED */
         "__vselect_i32"
     };
 

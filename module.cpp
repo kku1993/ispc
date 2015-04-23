@@ -58,6 +58,7 @@
 #include <set>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 #ifdef ISPC_NVPTX_ENABLED
 #include <map>
 #endif /* ISPC_NVPTX_ENABLED */
@@ -140,6 +141,20 @@ void RegisterDependency(const std::string &fileName)
 {
   if (fileName[0] != '<' && fileName != "stdlib.ispc")
     registeredDependencies.insert(fileName);
+}
+
+static void EmitProfileInfoHeader(FILE *f) {
+    if (!g->emitProfile) {
+        return;
+    }
+
+    // TODO profile insert code -- way too ugly
+    // Include the ISPCProfileInfo struct
+    std::ifstream infile("profile/ispc_profile_info.h");
+    std::string line;
+    while (std::getline(infile, line)) {
+        fprintf(f, "%s", line.c_str());
+    }
 }
 
 static void
@@ -2206,6 +2221,12 @@ Module::writeHeader(const char *fn) {
         fprintf(f, "}\n");
     }
 
+    if (g->emitProfile) {
+        EmitProfileInfoHeader(f);
+        fprintf(f, "#define ISPC_PROFILE 1\n");
+        fprintf(f, "void ISPCProfile(ISPCProfileInfo *info); \n\n");
+    }
+
     // end namespace
     fprintf(f, "\n");
     fprintf(f, "\n#ifdef __cplusplus\nnamespace ispc { /* namespace */\n#endif // __cplusplus\n");
@@ -2311,12 +2332,17 @@ Module::writeDispatchHeader(DispatchHeaderInfo *DHI) {
 
       fprintf(f, "#include <stdint.h>\n\n");
 
-
       if (g->emitInstrumentation) {
         fprintf(f, "#define ISPC_INSTRUMENTATION 1\n");
         fprintf(f, "extern \"C\" {\n");
         fprintf(f, "  void ISPCInstrument(const char *fn, const char *note, int line, uint64_t mask);\n");
         fprintf(f, "}\n");
+      }
+
+      if (g->emitProfile) {
+          EmitProfileInfoHeader(f);
+          fprintf(f, "#define ISPC_PROFILE 1\n");
+          fprintf(f, "void ISPCProfile(ISPCProfileInfo *info); \n\n");
       }
 
       // end namespace

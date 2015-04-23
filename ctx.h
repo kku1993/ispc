@@ -39,6 +39,7 @@
 #define ISPC_CTX_H 1
 
 #include "ispc.h"
+#include "profile/ispc_profile_info.h"
 #include <map>
 #if defined(LLVM_3_2)
   #include <llvm/InstrTypes.h>
@@ -331,6 +332,11 @@ public:
         this inserts a callback to the user-supplied instrumentation
         function at the current point in the code. */
     void AddInstrumentationPoint(const char *note);
+
+    /** If the user has asked to compile the program with profiling,
+        this inserts a callback to the user-supplied profile 
+        function at the current point in the code. */
+    void AddProfilePoint(ISPCProfileInfo *info);
     /** @} */
 
     /** @name Debugging support

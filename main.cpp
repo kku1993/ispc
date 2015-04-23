@@ -113,6 +113,7 @@ usage(int ret) {
     printf("    [-h <name>/--header-outfile=<name>]\tOutput filename for header\n");
     printf("    [-I <path>]\t\t\t\tAdd <path> to #include file search path\n");
     printf("    [--instrument]\t\t\tEmit instrumentation to gather performance data\n");
+    printf("    [--profile]\t\t\tEmit detailed profiling data to monitor performance\n");
     printf("    [--math-lib=<option>]\t\tSelect math library\n");
     printf("        default\t\t\t\tUse ispc's built-in math functions\n");
     printf("        fast\t\t\t\tUse high-performance but lower-accuracy math functions\n");
@@ -384,6 +385,8 @@ int main(int Argc, char *Argv[]) {
             g->dllExport = true;
         else if (!strcmp(argv[i], "--instrument"))
             g->emitInstrumentation = true;
+        else if (!strcmp(argv[i], "--profile"))
+            g->emitProfile = true;
         else if (!strcmp(argv[i], "-g")) {
             g->generateDebuggingSymbols = true;
         }

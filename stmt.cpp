@@ -44,6 +44,7 @@
 #include "sym.h"
 #include "module.h"
 #include "llvmutil.h"
+#include "profile/ispc_profile_info.h"
 
 #include <stdio.h>
 #include <map>
@@ -533,6 +534,11 @@ lEmitIfStatements(FunctionEmitContext *ctx, Stmt *stmts, const char *trueOrFalse
     if (dynamic_cast<StmtList *>(stmts) == NULL)
         ctx->StartScope();
     ctx->AddInstrumentationPoint(trueOrFalse);
+
+    // TODO pass in meaningful information
+    ISPCProfileInfo info;
+    ctx->AddProfilePoint(&info);
+
     stmts->EmitCode(ctx);
     if (dynamic_cast<const StmtList *>(stmts) == NULL)
         ctx->EndScope();

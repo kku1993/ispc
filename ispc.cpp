@@ -1372,6 +1372,7 @@ Globals::Globals() {
     disableLineWrap = false;
     emitPerfWarnings = true;
     emitInstrumentation = false;
+    emitProfile = false;
     generateDebuggingSymbols = false;
     enableFuzzTest = false;
     fuzzTestSeed = -1;
