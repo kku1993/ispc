@@ -143,18 +143,18 @@ void RegisterDependency(const std::string &fileName)
     registeredDependencies.insert(fileName);
 }
 
-static void EmitProfileInfoHeader(FILE *f) {
+static void EmitProfileHeader(FILE *f) {
     if (!g->emitProfile) {
         return;
     }
 
-    // TODO profile insert code -- way too ugly
-    // Include the ISPCProfileInfo struct
-    std::ifstream infile("profile/ispc_profile_info.h");
-    std::string line;
-    while (std::getline(infile, line)) {
-        fprintf(f, "%s", line.c_str());
-    }
+    fprintf(f, "#define ISPC_PROFILE 1\n");
+    fprintf(f, "extern \"C\" {\n");
+    fprintf(f, "  void ISPCProfileInit(const char *fn, int num_lanes, int verbose); \n");
+    fprintf(f, "  void ISPCProfileCompelte(); \n");
+    fprintf(f, "  void ISPCProfileStart(const char *note, int line, int type, int task, uint64_t mask); \n");
+    fprintf(f, "  void ISPCProfileEnd(); \n");
+    fprintf(f, "}\n");
 }
 
 static void
@@ -2222,9 +2222,7 @@ Module::writeHeader(const char *fn) {
     }
 
     if (g->emitProfile) {
-        EmitProfileInfoHeader(f);
-        fprintf(f, "#define ISPC_PROFILE 1\n");
-        fprintf(f, "void ISPCProfile(ISPCProfileInfo *info); \n\n");
+        EmitProfileHeader(f);
     }
 
     // end namespace
@@ -2340,9 +2338,7 @@ Module::writeDispatchHeader(DispatchHeaderInfo *DHI) {
       }
 
       if (g->emitProfile) {
-          EmitProfileInfoHeader(f);
-          fprintf(f, "#define ISPC_PROFILE 1\n");
-          fprintf(f, "void ISPCProfile(ISPCProfileInfo *info); \n\n");
+          EmitProfileHeader(f);
       }
 
       // end namespace

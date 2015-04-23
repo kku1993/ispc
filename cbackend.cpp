@@ -2626,13 +2626,6 @@ bool CWriter::doInitialization(llvm::Module &M) {
   }
   Out << "}\n\n";
 
-  // TODO profile insert code -- way too ugly
-  // Insert profile function 
-  Out << "#include <stdio.h>\n";
-  Out << "void ISPCProfile(ISPCProfileInfo *info) {\n";
-  Out << "  printf(\"Hello World!\\n\");\n";
-  Out << "}\n";
-
   if (!M.empty())
     Out << "\n\n/* Function Bodies */\n";
 

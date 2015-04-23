@@ -1104,7 +1104,11 @@ define(`stdlib_core', `
 declare i32 @__fast_masked_vload()
 
 declare void @ISPCInstrument(i8*, i8*, i32, i64) nounwind
-declare void @ISPCProfile(i8*) nounwind
+
+declare void @ISPCProfileInit(i8*, i32, i32) nounwind
+declare void @ISPCProfileComplete() nounwind
+declare void @ISPCProfileStart(i8*, i32, i32, i32, i64) nounwind
+declare void @ISPCProfileEnd() nounwind
 
 declare i1 @__is_compile_time_constant_mask(<WIDTH x MASK> %mask)
 declare i1 @__is_compile_time_constant_uniform_int32(i32)

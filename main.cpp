@@ -620,7 +620,8 @@ int main(int Argc, char *Argv[]) {
               "Program will be compiled and warnings/errors will "
               "be issued, but no output will be generated.");
 
-    return Module::CompileAndOutput(file, arch, cpu, target, generatePIC,
+    int success = Module::CompileAndOutput(file, arch, cpu, target, 
+                                    generatePIC,
                                     ot,
                                     outFileName,
                                     headerFileName,
@@ -628,4 +629,48 @@ int main(int Argc, char *Argv[]) {
                                     depsFileName,
                                     hostStubFileName,
                                     devStubFileName);
+    if (success != 0)
+      return 1;
+
+    if (g->emitProfile) {
+      // Link with internal profiler
+      char *cwd = get_current_dir_name();
+      if (cwd == NULL) {
+        Error(SourcePos(), "Failed to get current directory.");
+        return -1;
+      }
+
+      // Link into a temporary file
+      // TODO more robust way of getting the directory of the compiler
+      char pd[PATH_MAX], dir[PATH_MAX];
+      readlink("/proc/self/exe", dir, PATH_MAX);
+      int last_slash = 0;
+      for (int i = 0; i < PATH_MAX; i++) {
+        if (dir[i] == '\0')
+          break;
+        else if (dir[i] == '/')
+          last_slash = i;
+      }
+      memcpy(pd, dir, sizeof (char) * last_slash);
+      dir[last_slash] = '\0';
+
+      char cmd[PATH_MAX * 4];
+      memset(cmd, 0, sizeof (char) * PATH_MAX * 4);
+      sprintf(cmd, "ld -r -o %s/%s.ispc.profile.o %s/%s %s/profile/profile.o",
+        cwd, outFileName, cwd, outFileName, pd);
+      
+      int ret = system(cmd);
+      if (ret != 0) {
+        free(cwd);
+        return ret;
+      }
+      
+      sprintf(cmd, "mv %s/%s.ispc.profile.o %s/%s", cwd, outFileName, cwd, 
+          outFileName);
+
+      free(cwd);
+      return system(cmd);
+    }
+
+    return 0;
 }

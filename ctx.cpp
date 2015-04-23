@@ -44,7 +44,6 @@
 #include "expr.h"
 #include "module.h"
 #include "sym.h"
-#include "profile/ispc_profile_info.h"
 #include <map>
 #include <llvm/Support/Dwarf.h>
 #if defined(LLVM_3_2)
@@ -1638,12 +1637,25 @@ FunctionEmitContext::AddInstrumentationPoint(const char *note) {
 
 
 void
-FunctionEmitContext::AddProfilePoint(ISPCProfileInfo *info) {
-    AssertPos(currentPos, info != NULL);
+FunctionEmitContext::AddProfileStart(const char *note) {
+    AssertPos(currentPos, note != NULL);
     if (!g->emitProfile)
         return;
 
-    // TODO implement
+    std::vector<llvm::Value *> args;
+    // arg 1: provided note
+    args.push_back(lGetStringAsValue(bblock, note));
+    // arg 2: line number
+    args.push_back(LLVMInt32(currentPos.first_line));
+    // arg 3: TODO statement type
+    args.push_back(LLVMInt32(1)); 
+    // arg 4: TODO curren ttask
+    args.push_back(LLVMInt32(1)); 
+    // arg 5: current mask, movmsk'ed down to an int64
+    args.push_back(LaneMask(GetFullMask()));
+
+    llvm::Function *finst = m->module->getFunction("ISPCProfileStart");
+    CallInst(finst, NULL, args, "");
 }
 
 
