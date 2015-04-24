@@ -656,7 +656,7 @@ int main(int Argc, char *Argv[]) {
 
       char cmd[PATH_MAX * 4];
       memset(cmd, 0, sizeof (char) * PATH_MAX * 4);
-      sprintf(cmd, "ld -r -o %s/%s.ispc.profile.o %s/%s %s/profile/profile.o",
+      sprintf(cmd, "ld -r -o %s/%s.ispc.o %s/%s %s/profile/libprofile.o",
         cwd, outFileName, cwd, outFileName, pd);
       
       int ret = system(cmd);
@@ -665,7 +665,7 @@ int main(int Argc, char *Argv[]) {
         return ret;
       }
       
-      sprintf(cmd, "mv %s/%s.ispc.profile.o %s/%s", cwd, outFileName, cwd, 
+      sprintf(cmd, "mv %s/%s.ispc.o %s/%s", cwd, outFileName, cwd, 
           outFileName);
 
       free(cwd);
