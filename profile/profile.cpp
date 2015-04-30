@@ -12,13 +12,14 @@ extern "C" {
   void ISPCProfileEnd();
 }
 
-static int num_lanes;
+// TODO remove this assumption
+static int num_lanes = 8;
 
 // Intel Performance Counter Monitor
 static PCM *monitor;
 static SystemCounterState before_sstate;
 
-void mask_to_str(uint64_t mask, char *buffer) {
+static void mask_to_str(uint64_t mask, char *buffer) {
   for (int i = 0; i < num_lanes; i++) {
     buffer[i] = (mask >> (num_lanes - 1 - i)) & 0x1 ? '1' : '0';
   }
@@ -48,11 +49,11 @@ void ISPCProfileStart(const char *note, int line, int type, int task,
   (void) task;
   (void) type;
   char buffer[num_lanes + 1];
-  memset(buffer, 0, (num_lanes + 1) * sizeof (char));
+  memset(buffer, '\0', (num_lanes + 1) * sizeof (char));
   mask_to_str(mask, buffer);
   printf("[%d] %s %s\n", line, note, buffer);
 
-  // Get Interl performance monitor state
+  // Get Intel performance monitor state
   before_sstate = getSystemCounterState();
 }
 

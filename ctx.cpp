@@ -607,6 +607,9 @@ FunctionEmitContext::EndIf() {
                            notBreakOrContinue, "new_mask");
         SetInternalMask(newMask);
     }
+
+    if (g->emitProfile) 
+        AddProfileEnd();
 }
 
 
@@ -636,6 +639,9 @@ FunctionEmitContext::StartLoop(llvm::BasicBlock *bt, llvm::BasicBlock *ct,
     breakTarget = bt;
     continueTarget = ct;
     blockEntryMask = NULL; // this better be set by the loop!
+
+    if (g->emitProfile) 
+        AddProfileStart("Start Loop");
 }
 
 
@@ -651,6 +657,9 @@ FunctionEmitContext::EndLoop() {
         // into the loop, but still leaving off any lanes that executed a
         // 'return' statement.
         restoreMaskGivenReturns(ci->savedMask);
+
+    if (g->emitProfile) 
+        AddProfileEnd();
 }
 
 
@@ -685,6 +694,9 @@ FunctionEmitContext::StartForeach(ForeachType ft) {
     continueTarget = NULL; // should be set by SetContinueTarget()
 
     blockEntryMask = NULL;
+
+    if (g->emitProfile) 
+        AddProfileStart("Start ForEach Loop");
 }
 
 
@@ -692,6 +704,8 @@ void
 FunctionEmitContext::EndForeach() {
     CFInfo *ci = popCFState();
     AssertPos(currentPos, ci->IsForeach());
+    if (g->emitProfile) 
+        AddProfileEnd();
 }
 
 
@@ -985,6 +999,9 @@ FunctionEmitContext::StartSwitch(bool cfIsUniform, llvm::BasicBlock *bbBreak) {
     defaultBlock = NULL;
     caseBlocks = NULL;
     nextBlocks = NULL;
+
+    if (g->emitProfile) 
+        AddProfileStart("Start Switch");
 }
 
 
@@ -995,6 +1012,9 @@ FunctionEmitContext::EndSwitch() {
     CFInfo *ci = popCFState();
     if (ci->IsVarying() && bblock != NULL)
         restoreMaskGivenReturns(ci->savedMask);
+
+    if (g->emitProfile) 
+        AddProfileEnd();
 }
 
 
@@ -1635,6 +1655,34 @@ FunctionEmitContext::AddInstrumentationPoint(const char *note) {
     CallInst(finst, NULL, args, "");
 }
 
+void
+FunctionEmitContext::AddProfileInit() {
+    if (!g->emitProfile)
+        return;
+
+    std::vector<llvm::Value *> args;
+    // arg 1: filename as string
+    args.push_back(lGetStringAsValue(bblock, currentPos.name));
+    // arg 2: TODO number of lanes
+    args.push_back(LLVMInt32(8));
+    // arg 3: TODO verbose level
+    args.push_back(LLVMInt32(0));
+
+    llvm::Function *finst = m->module->getFunction("ISPCProfileInit");
+    CallInst(finst, NULL, args, "");
+}
+
+
+void
+FunctionEmitContext::AddProfileComplete() {
+    if (!g->emitProfile)
+        return;
+
+    std::vector<llvm::Value *> args;
+    llvm::Function *finst = m->module->getFunction("ISPCProfileComplete");
+    CallInst(finst, NULL, args, "");
+}
+
 
 void
 FunctionEmitContext::AddProfileStart(const char *note) {
@@ -1649,12 +1697,23 @@ FunctionEmitContext::AddProfileStart(const char *note) {
     args.push_back(LLVMInt32(currentPos.first_line));
     // arg 3: TODO statement type
     args.push_back(LLVMInt32(1)); 
-    // arg 4: TODO curren ttask
+    // arg 4: TODO current task
     args.push_back(LLVMInt32(1)); 
     // arg 5: current mask, movmsk'ed down to an int64
     args.push_back(LaneMask(GetFullMask()));
 
     llvm::Function *finst = m->module->getFunction("ISPCProfileStart");
+    CallInst(finst, NULL, args, "");
+}
+
+
+void
+FunctionEmitContext::AddProfileEnd() {
+    if (!g->emitProfile)
+        return;
+
+    std::vector<llvm::Value *> args;
+    llvm::Function *finst = m->module->getFunction("ISPCProfileEnd");
     CallInst(finst, NULL, args, "");
 }
 

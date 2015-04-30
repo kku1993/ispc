@@ -538,7 +538,7 @@ lEmitIfStatements(FunctionEmitContext *ctx, Stmt *stmts, const char *trueOrFalse
     ctx->AddProfileStart(trueOrFalse);
 
     stmts->EmitCode(ctx);
-    if (dynamic_cast<const StmtList *>(stmts) == NULL)
+    if (dynamic_cast<const StmtList *>(stmts) == NULL) 
         ctx->EndScope();
 }
 
@@ -1056,6 +1056,7 @@ void DoStmt::EmitCode(FunctionEmitContext *ctx) const {
         ctx->StartScope();
 
     ctx->AddInstrumentationPoint("do loop body");
+
     if (doCoherentCheck && !uniformTest) {
         // Check to see if the mask is all on
         llvm::BasicBlock *bAllOn = ctx->CreateBasicBlock("do_all_on");
