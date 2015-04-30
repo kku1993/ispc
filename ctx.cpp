@@ -538,12 +538,16 @@ FunctionEmitContext::BranchIfMaskNone(llvm::BasicBlock *btrue, llvm::BasicBlock 
 void
 FunctionEmitContext::StartUniformIf() {
     controlFlowInfo.push_back(CFInfo::GetIf(true, GetInternalMask()));
+    if (g->emitProfile)
+        AddProfileStart("Start Uniform If");
 }
 
 
 void
 FunctionEmitContext::StartVaryingIf(llvm::Value *oldMask) {
     controlFlowInfo.push_back(CFInfo::GetIf(false, oldMask));
+    if (g->emitProfile)
+        AddProfileStart("Start Varying If");
 }
 
 
@@ -1703,6 +1707,25 @@ FunctionEmitContext::AddProfileStart(const char *note) {
     args.push_back(LaneMask(GetFullMask()));
 
     llvm::Function *finst = m->module->getFunction("ISPCProfileStart");
+    CallInst(finst, NULL, args, "");
+}
+
+
+void
+FunctionEmitContext::AddProfileIteration(const char *note) {
+    AssertPos(currentPos, note != NULL);
+    if (!g->emitProfile)
+        return;
+
+    std::vector<llvm::Value *> args;
+    // arg 1: provided note
+    args.push_back(lGetStringAsValue(bblock, note));
+    // arg 2: line number
+    args.push_back(LLVMInt32(currentPos.first_line));
+    // arg 3: current mask, movmsk'ed down to an int64
+    args.push_back(LaneMask(GetFullMask()));
+
+    llvm::Function *finst = m->module->getFunction("ISPCProfileIteration");
     CallInst(finst, NULL, args, "");
 }
 

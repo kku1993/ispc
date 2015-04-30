@@ -338,6 +338,7 @@ public:
     void AddProfileInit();
     void AddProfileComplete();
     void AddProfileStart(const char *note);
+    void AddProfileIteration(const char *note);
     void AddProfileEnd();
     /** @} */
 

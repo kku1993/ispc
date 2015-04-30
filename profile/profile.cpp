@@ -10,6 +10,7 @@ extern "C" {
   void ISPCProfileStart(const char *note, int line, int type, int task,
       uint64_t mask);
   void ISPCProfileEnd();
+  void ISPCProfileIteration(const char *note, int line, int64_t mask);
 }
 
 // TODO remove this assumption
@@ -69,4 +70,11 @@ void ISPCProfileEnd() {
   sprintf(buffer, "IPC: %f, L3 Cache Hit Ratio: %f, Bytes Read: %ld\n", 
       ipc, l3_hit, bytes);
   printf("%s", buffer);
+}
+
+void ISPCProfileIteration(const char *note, int line, int64_t mask) {
+  char buffer[num_lanes + 1];
+  memset(buffer, '\0', (num_lanes + 1) * sizeof (char));
+  mask_to_str(mask, buffer);
+  printf("\t[%d] %s %s\n", line, note, buffer);
 }

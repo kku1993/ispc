@@ -534,8 +534,7 @@ lEmitIfStatements(FunctionEmitContext *ctx, Stmt *stmts, const char *trueOrFalse
         ctx->StartScope();
     ctx->AddInstrumentationPoint(trueOrFalse);
 
-    // TODO pass in meaningful information
-    ctx->AddProfileStart(trueOrFalse);
+    ctx->AddProfileIteration(trueOrFalse);
 
     stmts->EmitCode(ctx);
     if (dynamic_cast<const StmtList *>(stmts) == NULL) 
@@ -1056,6 +1055,7 @@ void DoStmt::EmitCode(FunctionEmitContext *ctx) const {
         ctx->StartScope();
 
     ctx->AddInstrumentationPoint("do loop body");
+    ctx->AddProfileIteration("do loop body"); 
 
     if (doCoherentCheck && !uniformTest) {
         // Check to see if the mask is all on
@@ -1262,6 +1262,7 @@ ForStmt::EmitCode(FunctionEmitContext *ctx) const {
     ctx->SetCurrentBasicBlock(bloop);
     ctx->SetBlockEntryMask(ctx->GetFullMask());
     ctx->AddInstrumentationPoint("for loop body");
+    ctx->AddProfileIteration("for loop body");
     if (!dynamic_cast<StmtList *>(stmts))
         ctx->StartScope();
 
@@ -2026,6 +2027,7 @@ ForeachStmt::EmitCode(FunctionEmitContext *ctx) const {
                               dimVariables[nDims-1]->storagePtr, span);
         ctx->SetContinueTarget(bbFullBodyContinue);
         ctx->AddInstrumentationPoint("foreach loop body (all on)");
+        ctx->AddProfileIteration("foreach loop body (all on)");
         stmts->EmitCode(ctx);
         AssertPos(pos, ctx->GetCurrentBasicBlock() != NULL);
         ctx->BranchInst(bbFullBodyContinue);
@@ -2086,6 +2088,7 @@ ForeachStmt::EmitCode(FunctionEmitContext *ctx) const {
         ctx->CreateBasicBlock("foreach_masked_continue");
     ctx->SetCurrentBasicBlock(bbMaskedBody); {
         ctx->AddInstrumentationPoint("foreach loop body (masked)");
+        ctx->AddProfileIteration("foreach loop body (masked)");
         ctx->SetContinueTarget(bbMaskedBodyContinue);
         ctx->DisableGatherScatterWarnings();
         ctx->SetBlockEntryMask(ctx->GetFullMask());
