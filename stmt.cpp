@@ -534,7 +534,7 @@ lEmitIfStatements(FunctionEmitContext *ctx, Stmt *stmts, const char *trueOrFalse
         ctx->StartScope();
     ctx->AddInstrumentationPoint(trueOrFalse);
 
-    ctx->AddProfileIteration(trueOrFalse);
+    ctx->AddProfileIf(trueOrFalse);
 
     stmts->EmitCode(ctx);
     if (dynamic_cast<const StmtList *>(stmts) == NULL) 

@@ -1731,6 +1731,25 @@ FunctionEmitContext::AddProfileIteration(const char *note) {
 
 
 void
+FunctionEmitContext::AddProfileIf(const char *note) {
+    AssertPos(currentPos, note != NULL);
+    if (!g->emitProfile)
+        return;
+
+    std::vector<llvm::Value *> args;
+    // arg 1: provided note
+    args.push_back(lGetStringAsValue(bblock, note));
+    // arg 2: line number
+    args.push_back(LLVMInt32(currentPos.first_line));
+    // arg 3: current mask, movmsk'ed down to an int64
+    args.push_back(LaneMask(GetFullMask()));
+
+    llvm::Function *finst = m->module->getFunction("ISPCProfileIf");
+    CallInst(finst, NULL, args, "");
+}
+
+
+void
 FunctionEmitContext::AddProfileEnd() {
     if (!g->emitProfile)
         return;

@@ -11,6 +11,7 @@ extern "C" {
       uint64_t mask);
   void ISPCProfileEnd();
   void ISPCProfileIteration(const char *note, int line, int64_t mask);
+  void ISPCProfileIf(const char *note, int line, int64_t mask);
 }
 
 // TODO remove this assumption
@@ -73,6 +74,13 @@ void ISPCProfileEnd() {
 }
 
 void ISPCProfileIteration(const char *note, int line, int64_t mask) {
+  char buffer[num_lanes + 1];
+  memset(buffer, '\0', (num_lanes + 1) * sizeof (char));
+  mask_to_str(mask, buffer);
+  printf("\t[%d] %s %s\n", line, note, buffer);
+}
+
+void ISPCProfileIf(const char *note, int line, int64_t mask) {
   char buffer[num_lanes + 1];
   memset(buffer, '\0', (num_lanes + 1) * sizeof (char));
   mask_to_str(mask, buffer);
