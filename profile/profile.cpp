@@ -18,8 +18,7 @@ extern "C" {
 // Avoid initializing the profiler multiple times.
 static bool profile_running = false;
 
-// TODO remove this assumption
-static int num_lanes = 8;
+static int num_lanes;
 
 // Intel Performance Counter Monitor
 static PCM *monitor;
@@ -38,7 +37,7 @@ void ISPCProfileInit(const char *file, int line, int total_lanes, int verbose) {
 
   profile_running = true;
 
-  printf("Profile init: %s @ %d\n", file, line);
+  printf("Profile init: %s[%d] with %d lanes\n", file, line, total_lanes);
 
   (void) verbose;
   num_lanes = total_lanes;

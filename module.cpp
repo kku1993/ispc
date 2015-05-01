@@ -158,8 +158,8 @@ static void EmitProfileHeader(FILE *f) {
     fprintf(f, "  void ISPCProfileEnd(); \n");
     fprintf(f, "}\n");
 
-    // TODO pass in actual number of lanes
-    fprintf(f, "#define ISPC_PROFILE_BEGIN(v) ISPCProfileInit(__FILE__, __LINE__, 8, (v)); \n");
+    int num_lanes = g->target->getVectorWidth();
+    fprintf(f, "#define ISPC_PROFILE_BEGIN(v) ISPCProfileInit(__FILE__, __LINE__, %d, (v)); \n", num_lanes);
     fprintf(f, "#define ISPC_PROFILE_END ISPCProfileComplete(); \n");
 }
 
