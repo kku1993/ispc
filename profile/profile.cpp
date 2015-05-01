@@ -5,7 +5,7 @@
 #include "intel_pcm/cpucounters.h"
 
 extern "C" {
-  void ISPCProfileInit(const char *fn);
+  void ISPCProfileInit(const char *fn, int total_lanes, int verbose);
   void ISPCProfileComplete();
   void ISPCProfileStart(const char *note, int start_line, int end_line, 
       int task, uint64_t mask);
@@ -14,11 +14,16 @@ extern "C" {
   void ISPCProfileIf(const char *note, int line, int64_t mask);
 }
 
+// Indicate whether a profiler is running already.
+// Avoid initializing the profiler multiple times.
+static bool profile_running = false;
+
 // TODO remove this assumption
 static int num_lanes = 8;
 
 // Intel Performance Counter Monitor
 static PCM *monitor;
+// TODO need a before state for each start/end pair
 static SystemCounterState before_sstate;
 
 static void mask_to_str(uint64_t mask, char *buffer) {
@@ -27,23 +32,34 @@ static void mask_to_str(uint64_t mask, char *buffer) {
   }
 }
 
-void ISPCProfileInit(const char *fn, int total_lanes, int verbose) {
-  // TODO implement
-  (void) fn;
+void ISPCProfileInit(const char *file, int total_lanes, int verbose) {
+  if (profile_running)
+    return;
+
+  profile_running = true;
+
+  printf("Profile init: %s\n", file);
+
   (void) verbose;
   num_lanes = total_lanes;
 
   monitor = PCM::getInstance();
   monitor->program(PCM::DEFAULT_EVENTS, NULL);
 
-  if (monitor->program() != PCM::Success) {
+  PCM::ErrorCode err = monitor->program();
+  if (err != PCM::Success) {
     // TODO report pcm failed
+    printf("PCM init failed [error = %d].\n", err);
     return;
   }
+
+  printf("Profile Init\n");
 }
 
 void ISPCProfileComplete() {
-  // TODO implement
+  monitor->cleanup();
+  profile_running = false;
+  printf("Profile Complete\n");
 }
 
 void ISPCProfileStart(const char *note, int start_line, int end_line, int task,
