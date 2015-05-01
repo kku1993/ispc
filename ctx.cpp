@@ -1697,10 +1697,10 @@ FunctionEmitContext::AddProfileStart(const char *note) {
     std::vector<llvm::Value *> args;
     // arg 1: provided note
     args.push_back(lGetStringAsValue(bblock, note));
-    // arg 2: line number
+    // arg 2: start line number
     args.push_back(LLVMInt32(currentPos.first_line));
-    // arg 3: TODO statement type
-    args.push_back(LLVMInt32(1)); 
+    // arg 3: end line number
+    args.push_back(LLVMInt32(currentPos.last_line));
     // arg 4: TODO current task
     args.push_back(LLVMInt32(1)); 
     // arg 5: current mask, movmsk'ed down to an int64

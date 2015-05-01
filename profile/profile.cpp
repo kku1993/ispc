@@ -7,8 +7,8 @@
 extern "C" {
   void ISPCProfileInit(const char *fn);
   void ISPCProfileComplete();
-  void ISPCProfileStart(const char *note, int line, int type, int task,
-      uint64_t mask);
+  void ISPCProfileStart(const char *note, int start_line, int end_line, 
+      int task, uint64_t mask);
   void ISPCProfileEnd();
   void ISPCProfileIteration(const char *note, int line, int64_t mask);
   void ISPCProfileIf(const char *note, int line, int64_t mask);
@@ -46,14 +46,13 @@ void ISPCProfileComplete() {
   // TODO implement
 }
 
-void ISPCProfileStart(const char *note, int line, int type, int task, 
+void ISPCProfileStart(const char *note, int start_line, int end_line, int task,
     uint64_t mask) {
   (void) task;
-  (void) type;
   char buffer[num_lanes + 1];
   memset(buffer, '\0', (num_lanes + 1) * sizeof (char));
   mask_to_str(mask, buffer);
-  printf("[%d] %s %s\n", line, note, buffer);
+  printf("[%d-%d] %s %s\n", start_line, end_line, note, buffer);
 
   // Get Intel performance monitor state
   before_sstate = getSystemCounterState();
