@@ -3841,6 +3841,8 @@ FunctionEmitContext::CallInst(llvm::Value *func, const FunctionType *funcType,
 
 llvm::Instruction *
 FunctionEmitContext::ReturnInst() {
+    AddProfileEnd();
+
     if (launchedTasks)
         // Add a sync call at the end of any function that launched tasks
         SyncInst();
