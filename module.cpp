@@ -150,7 +150,7 @@ static void EmitProfileHeader(FILE *f) {
 
     fprintf(f, "#define ISPC_PROFILE 1\n");
     fprintf(f, "extern \"C\" {\n");
-    fprintf(f, "  void ISPCProfileInit(const char *fn, int num_lanes, int verbose); \n");
+    fprintf(f, "  void ISPCProfileInit(const char *fn, int line, int num_lanes, int verbose); \n");
     fprintf(f, "  void ISPCProfileComplete(); \n");
     fprintf(f, "  void ISPCProfileStart(const char *note, int line, int type, int task, uint64_t mask); \n");
     fprintf(f, "  void ISPCProfileIteration(const char *note, int line, uint64_t mask); \n");
@@ -159,8 +159,7 @@ static void EmitProfileHeader(FILE *f) {
     fprintf(f, "}\n");
 
     // TODO pass in actual number of lanes
-    // TODO pass in line number 
-    fprintf(f, "#define ISPC_PROFILE_BEGIN(v) ISPCProfileInit(__FILE__, 8, (v)); \n");
+    fprintf(f, "#define ISPC_PROFILE_BEGIN(v) ISPCProfileInit(__FILE__, __LINE__, 8, (v)); \n");
     fprintf(f, "#define ISPC_PROFILE_END ISPCProfileComplete(); \n");
 }
 

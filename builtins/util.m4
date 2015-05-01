@@ -2325,7 +2325,7 @@ declare void @ISPCLaunch(i8**, i8*, i8*, i32, i32, i32) nounwind
 declare void @ISPCSync(i8*) nounwind
 declare void @ISPCInstrument(i8*, i8*, i32, i64) nounwind
 
-declare void @ISPCProfileInit(i8*, i32, i32) nounwind
+declare void @ISPCProfileInit(i8*, i32, i32, i32) nounwind
 declare void @ISPCProfileComplete() nounwind
 declare void @ISPCProfileStart(i8*, i32, i32, i32, i64) nounwind
 declare void @ISPCProfileIteration(i8*, i32, i64) nounwind

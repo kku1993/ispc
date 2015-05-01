@@ -1659,34 +1659,6 @@ FunctionEmitContext::AddInstrumentationPoint(const char *note) {
     CallInst(finst, NULL, args, "");
 }
 
-void
-FunctionEmitContext::AddProfileInit() {
-    if (!g->emitProfile)
-        return;
-
-    std::vector<llvm::Value *> args;
-    // arg 1: filename as string
-    args.push_back(lGetStringAsValue(bblock, currentPos.name));
-    // arg 2: TODO number of lanes
-    args.push_back(LLVMInt32(8));
-    // arg 3: TODO verbose level
-    args.push_back(LLVMInt32(0));
-
-    llvm::Function *finst = m->module->getFunction("ISPCProfileInit");
-    CallInst(finst, NULL, args, "");
-}
-
-
-void
-FunctionEmitContext::AddProfileComplete() {
-    if (!g->emitProfile)
-        return;
-
-    std::vector<llvm::Value *> args;
-    llvm::Function *finst = m->module->getFunction("ISPCProfileComplete");
-    CallInst(finst, NULL, args, "");
-}
-
 
 void
 FunctionEmitContext::AddProfileStart(const char *note) {

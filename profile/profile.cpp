@@ -5,7 +5,7 @@
 #include "intel_pcm/cpucounters.h"
 
 extern "C" {
-  void ISPCProfileInit(const char *fn, int total_lanes, int verbose);
+  void ISPCProfileInit(const char *fn, int line, int total_lanes, int verbose);
   void ISPCProfileComplete();
   void ISPCProfileStart(const char *note, int start_line, int end_line, 
       int task, uint64_t mask);
@@ -32,13 +32,13 @@ static void mask_to_str(uint64_t mask, char *buffer) {
   }
 }
 
-void ISPCProfileInit(const char *file, int total_lanes, int verbose) {
+void ISPCProfileInit(const char *file, int line, int total_lanes, int verbose) {
   if (profile_running)
     return;
 
   profile_running = true;
 
-  printf("Profile init: %s\n", file);
+  printf("Profile init: %s @ %d\n", file, line);
 
   (void) verbose;
   num_lanes = total_lanes;
