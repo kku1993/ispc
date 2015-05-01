@@ -10,4 +10,5 @@
 TODO
 ====
 - Allow calls to ProfileInit from within ISPC.
+- Test compability with pthreads and processes.
 - Add verbose flag support 

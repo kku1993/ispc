@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "intel_pcm/cpucounters.h"
+#include "profile_ctx.h"
 
 extern "C" {
   void ISPCProfileInit(const char *fn, int line, int total_lanes, int verbose);
@@ -18,12 +19,13 @@ extern "C" {
 // Avoid initializing the profiler multiple times.
 static bool profile_running = false;
 
+// Vector width that the program is compiled for.
 static int num_lanes;
 
 // Intel Performance Counter Monitor
 static PCM *monitor;
-// TODO need a before state for each start/end pair
-static SystemCounterState before_sstate;
+
+static ProfileContext *ctx = new ProfileContext();
 
 static void mask_to_str(uint64_t mask, char *buffer) {
   for (int i = 0; i < num_lanes; i++) {
@@ -63,28 +65,38 @@ void ISPCProfileComplete() {
 
 void ISPCProfileStart(const char *note, int start_line, int end_line, int task,
     uint64_t mask) {
-  (void) task;
   char buffer[num_lanes + 1];
   memset(buffer, '\0', (num_lanes + 1) * sizeof (char));
   mask_to_str(mask, buffer);
   printf("[%d-%d] %s %s\n", start_line, end_line, note, buffer);
 
   // Get Intel performance monitor state
-  before_sstate = getSystemCounterState();
+  SystemCounterState state = getSystemCounterState();
+
+  ProfileRegion *region = new ProfileRegion(note, start_line, end_line, task, 
+      mask, state);
+  ctx->pushRegion(region);
 }
 
 void ISPCProfileEnd() {
   SystemCounterState after_sstate = getSystemCounterState();
 
-  double ipc = getIPC(before_sstate, after_sstate);
-  double l3_hit = getL3CacheHitRatio(before_sstate, after_sstate);
-  uint64_t bytes = getBytesReadFromMC(before_sstate, after_sstate);
+  // Remove the profile region from the profiling context.
+  ProfileRegion *region = ctx->popRegion();
+  if (region == NULL) {
+    // TODO stop program 
+    printf("ERROR: No region currently in scope can be removed.\n");
+  }
+  region->updateExitStatus(after_sstate);
 
-  char buffer[512];
-  memset(buffer, 0, sizeof (char) * 512);
-  sprintf(buffer, "IPC: %f, L3 Cache Hit Ratio: %f, Bytes Read: %ld\n", 
-      ipc, l3_hit, bytes);
-  printf("%s", buffer);
+  double ipc = region->getRegionIPC();
+  double l3_hit = region->getRegionL3HitRatio();
+  double l2_hit = region->getRegionL2HitRatio();
+  uint64_t bytes = region->getRegionBytesRead();
+
+  printf("IPC: %f, L2 Cache Hit Ratio: %f, L3 Cache Hit Ratio: %f, Bytes Read: %ld\n", ipc, l2_hit, l3_hit, bytes);
+
+  delete region;
 }
 
 void ISPCProfileIteration(const char *note, int line, int64_t mask) {

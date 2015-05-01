@@ -1,7 +1,6 @@
 CXX=g++ -m64
 CXXFLAGS=-Iobjs/ -g3 -O3 -Wall -Werror -Wextra
 
-APP_NAME=profile
 LIB_NAME=libprofile
 OBJDIR=objs
 PCMDIR=intel_pcm
@@ -19,17 +18,14 @@ clean:
 veryclean:
 		/bin/rm -rf $(OBJDIR) *~ $(LIB_NAME).o; cd $(PCMDIR); make clean
 
-OBJS=
+OBJS=$(OBJDIR)/profile_ctx.o $(OBJDIR)/profile.o
 PCMOBJS=$(PCMDIR)/cpucounters.o $(PCMDIR)/client_bw.o $(PCMDIR)/pci.o $(PCMDIR)/msr.o
 
-$(LIB_NAME).o: $(APP_NAME).o $(OBJS) $(PCMOBJS)
-		ld -r $(OBJDIR)/$(APP_NAME).o $(PCMOBJS) -o $@
+$(LIB_NAME).o: $(OBJS) $(PCMOBJS) dirs
+		ld -r $(OBJS) $(PCMOBJS) -o $@
 
-$(APP_NAME).o: $(APP_NAME).cpp dirs $(OBJS) 
-		$(CXX) $(CXXFLAGS) $(APP_NAME).cpp -c -o $(OBJDIR)/$@ $(OBJS)
-
-$(OBJDIR)/%.o: %.cpp
+$(OBJDIR)/%.o: %.cpp dirs
 		$(CXX) $< $(CXXFLAGS) -c -o $@
 
-$(PCMDIR)/%.o: $(PCMDIR)/%.cpp
+$(PCMDIR)/%.o: $(PCMDIR)/%.cpp 
 		cd $(PCMDIR); make
