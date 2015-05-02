@@ -11,4 +11,5 @@ TODO
 ====
 - Allow calls to ProfileInit from within ISPC.
 - Test compability with pthreads and processes.
-- Add verbose flag support 
+- Allow user to decide what kinds of regions to log.
+- Explain the region design concept.

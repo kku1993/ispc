@@ -74,7 +74,7 @@ void ISPCProfileStart(const char *note, int start_line, int end_line, int task,
   SystemCounterState state = getSystemCounterState();
 
   ProfileRegion *region = new ProfileRegion(note, start_line, end_line, task, 
-      mask, state);
+      num_lanes, mask, state);
   ctx->pushRegion(region);
 }
 
@@ -104,6 +104,8 @@ void ISPCProfileIteration(const char *note, int line, int64_t mask) {
   memset(buffer, '\0', (num_lanes + 1) * sizeof (char));
   mask_to_str(mask, buffer);
   printf("\t[%d] %s %s\n", line, note, buffer);
+
+  ctx->updateCurrentRegion(note, line, mask);
 }
 
 void ISPCProfileIf(const char *note, int line, int64_t mask) {
@@ -111,4 +113,6 @@ void ISPCProfileIf(const char *note, int line, int64_t mask) {
   memset(buffer, '\0', (num_lanes + 1) * sizeof (char));
   mask_to_str(mask, buffer);
   printf("\t[%d] %s %s\n", line, note, buffer);
+
+  ctx->updateCurrentRegion(note, line, mask);
 }

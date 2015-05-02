@@ -2,12 +2,18 @@
  *  @file profile_ctx.h
  *  @brief Header file for profile context.
  */
-#include <stdint.h>
+#include <map>
 #include <stack>
+#include <stdint.h>
 
 #include "intel_pcm/cpucounters.h"
 
+// Region id type.
 typedef uint64_t rid_t;
+
+// Lane usage map type. Maps line number to 
+// (total number of lanes available, lanes actually used)
+typedef std::map<int, std::pair<int, int> > LaneUsageMap;
 
 // Struct to keep track each profiling region surrounded by 
 // and ProfileStart/ProfileEnd.
@@ -22,14 +28,21 @@ class ProfileRegion{
     // Unique id of the region.
     rid_t id;
 
-    const char *note;
+    const char *region_note;
     int start_line;
     int end_line;
     int task;
+    int total_num_lanes;
+
+    // Initial mask upon entering the region.
     uint64_t initial_mask;
 
+    // Map line within a region to lane usage information.
+    LaneUsageMap laneUsageMap;
+
   public:
-    ProfileRegion(const char*, int, int, int, uint64_t, SystemCounterState);
+    ProfileRegion(const char*, int, int, int, int, uint64_t, 
+        SystemCounterState);
     ~ProfileRegion();
     void setId(rid_t);
     void updateExitStatus(SystemCounterState);
@@ -37,6 +50,7 @@ class ProfileRegion{
     double getRegionL3HitRatio();
     double getRegionL2HitRatio();
     uint64_t getRegionBytesRead();
+    void updateLineMask(int line, uint64_t mask);
 };
 
 class ProfileContext{
@@ -54,4 +68,5 @@ class ProfileContext{
     ~ProfileContext();
     void pushRegion(ProfileRegion *);
     ProfileRegion *popRegion();
+    void updateCurrentRegion(const char *note, int line, uint64_t mask);
 };
