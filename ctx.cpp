@@ -1727,6 +1727,9 @@ FunctionEmitContext::AddProfileEnd() {
         return;
 
     std::vector<llvm::Value *> args;
+    // arg 1: line number
+    args.push_back(LLVMInt32(currentPos.last_line));
+
     llvm::Function *finst = m->module->getFunction("ISPCProfileEnd");
     CallInst(finst, NULL, args, "");
 }

@@ -16,7 +16,7 @@ extern "C" {
   void ISPCProfileComplete();
   void ISPCProfileStart(const char *note, int start_line, int end_line, 
       int task, uint64_t mask);
-  void ISPCProfileEnd();
+  void ISPCProfileEnd(int end_line);
   void ISPCProfileIteration(const char *note, int line, int64_t mask);
   void ISPCProfileIf(const char *note, int line, int64_t mask);
 }
@@ -126,11 +126,11 @@ void ISPCProfileStart(const char *note, int start_line, int end_line, int task,
   ctx->pushRegion(region);
 }
 
-void ISPCProfileEnd() {
+void ISPCProfileEnd(int end_line) {
   SystemCounterState after_sstate = getSystemCounterState();
 
   // Remove the profile region from the profiling context.
-  std::string json = ctx->popRegion(after_sstate);
+  std::string json = ctx->popRegion(after_sstate, end_line);
   region_json.push_back(json); 
 }
 

@@ -155,7 +155,7 @@ static void EmitProfileHeader(FILE *f) {
     fprintf(f, "  void ISPCProfileStart(const char *note, int line, int type, int task, uint64_t mask); \n");
     fprintf(f, "  void ISPCProfileIteration(const char *note, int line, uint64_t mask); \n");
     fprintf(f, "  void ISPCProfileIf(const char *note, int line, uint64_t mask); \n");
-    fprintf(f, "  void ISPCProfileEnd(); \n");
+    fprintf(f, "  void ISPCProfileEnd(int end_line); \n");
     fprintf(f, "}\n");
 
     int num_lanes = g->target->getVectorWidth();

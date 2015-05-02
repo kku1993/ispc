@@ -9,6 +9,8 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 using namespace rapidjson;
 
 ////////////////////////////////////////////
@@ -46,6 +48,12 @@ void ProfileRegion::setId(rid_t id) {
 
 void ProfileRegion::updateExitStatus(SystemCounterState state) {
   this->exit_sstate = state;
+}
+
+void ProfileRegion::updateEndLine(int end_line) {
+  // Both end line provided to the constructor and the end line obtained from 
+  // ProfileEnd are not reliable, so we get the best estimate of the 2.
+  this->end_line = MAX(end_line, this->end_line);
 }
 
 double ProfileRegion::getRegionIPC() {
@@ -156,12 +164,14 @@ void ProfileContext::pushRegion(ProfileRegion *r) {
 
 // Removes the most recent profile region.
 // Return the JSON for the region.
-std::string ProfileContext::popRegion(SystemCounterState exit_state) {
+std::string ProfileContext::popRegion(SystemCounterState exit_state, 
+    int end_line) {
   if (this->regions.empty())
     return NULL;
 
   ProfileRegion *r = this->regions.top();
   r->updateExitStatus(exit_state); 
+  r->updateEndLine(end_line); 
 
   std::string json(r->outputJSON());
 

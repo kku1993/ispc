@@ -49,6 +49,7 @@ class ProfileRegion{
     ~ProfileRegion();
     void setId(rid_t);
     void updateExitStatus(SystemCounterState);
+    void updateEndLine(int);
     double getRegionIPC();
     double getRegionL3HitRatio();
     double getRegionL2HitRatio();
@@ -74,6 +75,6 @@ class ProfileContext{
     ProfileContext();
     ~ProfileContext();
     void pushRegion(ProfileRegion *);
-    std::string popRegion(SystemCounterState);
+    std::string popRegion(SystemCounterState exit_state, int end_line);
     void updateCurrentRegion(const char *note, int line, uint64_t mask);
 };
