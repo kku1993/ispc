@@ -14,6 +14,14 @@ TODO
 - Allow user to decide what kinds of regions to log.
 - Explain the region design concept.
 
+Setup
+=====
+- Install `cmake`
+- Build `rapidjson`
+```
+cd rapidjson; mkdir build; cd build; ../cmake
+```
+
 External Libraries Used
 =======================
 - [Intel Performance Counter Monitor](https://software.intel.com/en-us/articles/intel-performance-counter-monitor)
