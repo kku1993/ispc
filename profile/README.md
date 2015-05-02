@@ -13,3 +13,8 @@ TODO
 - Test compability with pthreads and processes.
 - Allow user to decide what kinds of regions to log.
 - Explain the region design concept.
+
+External Libraries Used
+=======================
+- [Intel Performance Counter Monitor](https://software.intel.com/en-us/articles/intel-performance-counter-monitor)
+- [raidjson](https://github.com/miloyip/rapidjson)

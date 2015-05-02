@@ -5,6 +5,11 @@
   */
 
 #include "profile_ctx.h"
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+
+using namespace rapidjson;
 
 ////////////////////////////////////////////
 // Util
@@ -32,6 +37,7 @@ ProfileRegion::ProfileRegion(const char *note, int start_line, int end_line,
 }
 
 ProfileRegion::~ProfileRegion() {
+  this->laneUsageMap.clear();
 }
 
 void ProfileRegion::setId(rid_t id) {
@@ -72,7 +78,57 @@ void ProfileRegion::updateLineMask(int line, uint64_t mask) {
     int total_used_lanes = usage.second + lanes_used;
     this->laneUsageMap[line] = std::make_pair(total_lanes, total_used_lanes);
   }
+}
 
+const char *ProfileRegion::outputJSON() {
+  const char *base = 
+    "{"
+      "\"region_id\":0,"
+      "\"start_line\":0,"
+      "\"end_line\":0,"
+      "\"task\":0,"
+      "\"initial_mask\":0,"
+      "\"lane_usage\":[],"
+      "\"ipc\":0,"
+      "\"l2_hit\":0,"
+      "\"l3_hit\":0,"
+      "\"bytes_read\":0"
+    "}";
+
+  Document d;
+  d.Parse(base);
+
+  d["region_id"].SetUint64(this->id);
+  d["start_line"].SetInt(this->start_line);
+  d["end_line"].SetInt(this->end_line);
+  d["task"].SetInt(this->task);
+  d["initial_mask"].SetUint64(this->initial_mask);
+  d["ipc"].SetDouble(getRegionIPC());
+  d["l2_hit"].SetDouble(getRegionL2HitRatio());
+  d["l3_hit"].SetDouble(getRegionL3HitRatio());
+  d["bytes_read"].SetDouble(getRegionBytesRead());
+
+  // Add list of lane usage by line number.
+  Value &lane_usage = d["lane_usage"];
+  Document::AllocatorType &allocator = d.GetAllocator();
+  for (LaneUsageMap::iterator it = this->laneUsageMap.begin(); 
+      it != this->laneUsageMap.end(); ++it) {
+    Value line(kObjectType);
+
+    double percent = it->second.second/double(it->second.first);
+
+    line.AddMember("line", it->first, allocator);
+    line.AddMember("percent", percent, allocator);
+
+    lane_usage.PushBack(line, allocator); 
+  }
+  
+  // Stringify the DOM
+  StringBuffer buffer;
+  Writer<StringBuffer> writer(buffer);
+  d.Accept(writer);
+
+  return buffer.GetString();
 }
 
 ////////////////////////////////////////////

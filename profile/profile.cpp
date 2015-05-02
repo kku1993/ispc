@@ -89,13 +89,9 @@ void ISPCProfileEnd() {
   }
   region->updateExitStatus(after_sstate);
 
-  double ipc = region->getRegionIPC();
-  double l3_hit = region->getRegionL3HitRatio();
-  double l2_hit = region->getRegionL2HitRatio();
-  uint64_t bytes = region->getRegionBytesRead();
+  region->outputJSON();
 
-  printf("IPC: %f, L2 Cache Hit Ratio: %f, L3 Cache Hit Ratio: %f, Bytes Read: %ld\n", ipc, l2_hit, l3_hit, bytes);
-
+  // TODO don't delete here.
   delete region;
 }
 

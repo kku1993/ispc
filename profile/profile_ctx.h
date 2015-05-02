@@ -2,9 +2,10 @@
  *  @file profile_ctx.h
  *  @brief Header file for profile context.
  */
+#include <cstdint>
 #include <map>
 #include <stack>
-#include <stdint.h>
+#include <string>
 
 #include "intel_pcm/cpucounters.h"
 
@@ -32,6 +33,8 @@ class ProfileRegion{
     int start_line;
     int end_line;
     int task;
+
+    // Total number of available lanes.
     int total_num_lanes;
 
     // Initial mask upon entering the region.
@@ -51,11 +54,15 @@ class ProfileRegion{
     double getRegionL2HitRatio();
     uint64_t getRegionBytesRead();
     void updateLineMask(int line, uint64_t mask);
+    const char *outputJSON();
 };
 
 class ProfileContext{
   private:
     // Counter for assigning unique region ids.
+    // The id is assigned in monotonically increasing order, so it can also 
+    // be used to identify which region started first (useful when dealing with
+    // nested regions in recursion)
     rid_t region_id_counter;
 
     // Profile regions are organized in a stack so all profiling information

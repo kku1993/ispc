@@ -1,5 +1,5 @@
 CXX=g++ -m64
-CXXFLAGS=-Iobjs/ -g3 -O3 -Wall -Werror -Wextra
+CXXFLAGS=-Iobjs/ -Irapidjson/include/ -g3 -O3 -Wall -Werror -Wextra -std=c++11
 
 LIB_NAME=libprofile
 OBJDIR=objs
