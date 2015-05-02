@@ -87,6 +87,7 @@ std::string ProfileRegion::outputJSON() {
       "\"start_line\":0,"
       "\"end_line\":0,"
       "\"task\":0,"
+      "\"total_num_lanes\":0,"
       "\"initial_mask\":0,"
       "\"lane_usage\":[],"
       "\"ipc\":0,"
@@ -102,6 +103,7 @@ std::string ProfileRegion::outputJSON() {
   d["start_line"].SetInt(this->start_line);
   d["end_line"].SetInt(this->end_line);
   d["task"].SetInt(this->task);
+  d["total_num_lanes"].SetInt(this->total_num_lanes);
   d["initial_mask"].SetUint64(this->initial_mask);
   d["ipc"].SetDouble(getRegionIPC());
   d["l2_hit"].SetDouble(getRegionL2HitRatio());
