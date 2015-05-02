@@ -54,7 +54,7 @@ class ProfileRegion{
     double getRegionL2HitRatio();
     uint64_t getRegionBytesRead();
     void updateLineMask(int line, uint64_t mask);
-    const char *outputJSON();
+    std::string outputJSON();
 };
 
 class ProfileContext{
@@ -74,6 +74,6 @@ class ProfileContext{
     ProfileContext();
     ~ProfileContext();
     void pushRegion(ProfileRegion *);
-    ProfileRegion *popRegion();
+    std::string popRegion(SystemCounterState);
     void updateCurrentRegion(const char *note, int line, uint64_t mask);
 };

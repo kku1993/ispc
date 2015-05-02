@@ -80,7 +80,7 @@ void ProfileRegion::updateLineMask(int line, uint64_t mask) {
   }
 }
 
-const char *ProfileRegion::outputJSON() {
+std::string ProfileRegion::outputJSON() {
   const char *base = 
     "{"
       "\"region_id\":0,"
@@ -128,7 +128,8 @@ const char *ProfileRegion::outputJSON() {
   Writer<StringBuffer> writer(buffer);
   d.Accept(writer);
 
-  return buffer.GetString();
+  std::string str(buffer.GetString());
+  return str;
 }
 
 ////////////////////////////////////////////
@@ -152,14 +153,19 @@ void ProfileContext::pushRegion(ProfileRegion *r) {
 }
 
 // Removes the most recent profile region.
-ProfileRegion *ProfileContext::popRegion() {
+// Return the JSON for the region.
+std::string ProfileContext::popRegion(SystemCounterState exit_state) {
   if (this->regions.empty())
     return NULL;
 
   ProfileRegion *r = this->regions.top();
+  r->updateExitStatus(exit_state); 
+
+  std::string json(r->outputJSON());
+
   this->regions.pop();
 
-  return r;
+  return json;
 }
 
 // Update the most recent profile region.
