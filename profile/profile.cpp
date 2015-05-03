@@ -14,8 +14,8 @@
 extern "C" {
   void ISPCProfileInit(const char *fn, int line, int total_lanes, int verbose);
   void ISPCProfileComplete();
-  void ISPCProfileStart(const char *note, int start_line, int end_line, 
-      int task, uint64_t mask);
+  void ISPCProfileStart(const char *note, int region_type, int start_line, 
+      int end_line, int task, uint64_t mask);
   void ISPCProfileEnd(int end_line);
   void ISPCProfileIteration(const char *note, int line, int64_t mask);
   void ISPCProfileIf(const char *note, int line, int64_t mask);
@@ -116,13 +116,13 @@ void ISPCProfileComplete() {
   profile_running = false;
 }
 
-void ISPCProfileStart(const char *note, int start_line, int end_line, int task,
-    uint64_t mask) {
+void ISPCProfileStart(const char *note, int region_type, int start_line, 
+    int end_line, int task, uint64_t mask) {
   // Get Intel performance monitor state
   SystemCounterState state = getSystemCounterState();
 
-  ProfileRegion *region = new ProfileRegion(note, start_line, end_line, task, 
-      num_lanes, mask, state);
+  ProfileRegion *region = new ProfileRegion(note, region_type, start_line, 
+      end_line, task, num_lanes, mask, state);
   ctx->pushRegion(region);
 }
 

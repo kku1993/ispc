@@ -44,6 +44,7 @@
 #include "stmt.h"
 #include "sym.h"
 #include "util.h"
+#include "profile/profile_region_types.h"
 #include <stdio.h>
 
 #if defined(LLVM_3_2)
@@ -373,7 +374,7 @@ Function::emitCode(FunctionEmitContext *ctx, llvm::Function *function,
     if (code != NULL) {
         ctx->SetDebugPos(code->pos);
         ctx->AddInstrumentationPoint("function entry");
-        ctx->AddProfileStart("function entry");
+        ctx->AddProfileStart("function entry", PROFILE_REGION_FUNCTION);
 
         int costEstimate = EstimateCost(code);
         Debug(code->pos, "Estimated cost for function \"%s\" = %d\n",

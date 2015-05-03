@@ -44,6 +44,7 @@
 #include "expr.h"
 #include "module.h"
 #include "sym.h"
+#include "profile/profile_region_types.h"
 #include <map>
 #include <llvm/Support/Dwarf.h>
 #if defined(LLVM_3_2)
@@ -539,7 +540,7 @@ void
 FunctionEmitContext::StartUniformIf() {
     controlFlowInfo.push_back(CFInfo::GetIf(true, GetInternalMask()));
     if (g->emitProfile)
-        AddProfileStart("Start Uniform If");
+        AddProfileStart("Start Uniform If", PROFILE_REGION_IF_UNIFORM);
 }
 
 
@@ -547,7 +548,7 @@ void
 FunctionEmitContext::StartVaryingIf(llvm::Value *oldMask) {
     controlFlowInfo.push_back(CFInfo::GetIf(false, oldMask));
     if (g->emitProfile)
-        AddProfileStart("Start Varying If");
+        AddProfileStart("Start Varying If", PROFILE_REGION_IF_VARYING);
 }
 
 
@@ -645,7 +646,7 @@ FunctionEmitContext::StartLoop(llvm::BasicBlock *bt, llvm::BasicBlock *ct,
     blockEntryMask = NULL; // this better be set by the loop!
 
     if (g->emitProfile) 
-        AddProfileStart("Start Loop");
+        AddProfileStart("Start Loop", PROFILE_REGION_LOOP);
 }
 
 
@@ -700,7 +701,7 @@ FunctionEmitContext::StartForeach(ForeachType ft) {
     blockEntryMask = NULL;
 
     if (g->emitProfile) 
-        AddProfileStart("Start ForEach Loop");
+        AddProfileStart("Start ForEach Loop", PROFILE_REGION_FOREACH);
 }
 
 
@@ -1005,7 +1006,7 @@ FunctionEmitContext::StartSwitch(bool cfIsUniform, llvm::BasicBlock *bbBreak) {
     nextBlocks = NULL;
 
     if (g->emitProfile) 
-        AddProfileStart("Start Switch");
+        AddProfileStart("Start Switch", PROFILE_REGION_SWITCH);
 }
 
 
@@ -1661,7 +1662,7 @@ FunctionEmitContext::AddInstrumentationPoint(const char *note) {
 
 
 void
-FunctionEmitContext::AddProfileStart(const char *note) {
+FunctionEmitContext::AddProfileStart(const char *note, int region_type) {
     AssertPos(currentPos, note != NULL);
     if (!g->emitProfile)
         return;
@@ -1669,13 +1670,15 @@ FunctionEmitContext::AddProfileStart(const char *note) {
     std::vector<llvm::Value *> args;
     // arg 1: provided note
     args.push_back(lGetStringAsValue(bblock, note));
-    // arg 2: start line number
+    // arg 2: region type
+    args.push_back(LLVMInt32(region_type));
+    // arg 3: start line number
     args.push_back(LLVMInt32(currentPos.first_line));
-    // arg 3: end line number
+    // arg 4: end line number
     args.push_back(LLVMInt32(currentPos.last_line));
-    // arg 4: TODO current task
+    // arg 5: TODO current task
     args.push_back(LLVMInt32(1)); 
-    // arg 5: current mask, movmsk'ed down to an int64
+    // arg 6: current mask, movmsk'ed down to an int64
     args.push_back(LaneMask(GetFullMask()));
 
     llvm::Function *finst = m->module->getFunction("ISPCProfileStart");

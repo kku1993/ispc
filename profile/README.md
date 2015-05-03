@@ -6,6 +6,15 @@
     - Fine grain control of what to measure
     - Can control how detailed the profiler should be
 - Put the provided macros around calls to ISPC functions in cpp file.
+- Region types:
+```
+  IF_UNIFORM 0
+  IF_VARYING 1
+  LOOP 2
+  FOREACH 3
+  SWITCH 4
+  FUNCTION 5
+```
 
 TODO
 ====

@@ -30,6 +30,7 @@ class ProfileRegion{
     rid_t id;
 
     const char *region_note;
+    int region_type;
     int start_line;
     int end_line;
     int task;
@@ -44,7 +45,7 @@ class ProfileRegion{
     LaneUsageMap laneUsageMap;
 
   public:
-    ProfileRegion(const char*, int, int, int, int, uint64_t, 
+    ProfileRegion(const char*, int, int, int, int, int, uint64_t, 
         SystemCounterState);
     ~ProfileRegion();
     void setId(rid_t);

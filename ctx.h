@@ -335,7 +335,7 @@ public:
     /** If the user has asked to compile the program with profiling,
         these functions insert callbacks to the internal profiling
         functions at the current point in the code. */
-    void AddProfileStart(const char *note);
+    void AddProfileStart(const char *note, int region_type);
     void AddProfileIteration(const char *note);
     void AddProfileIf(const char *note);
     void AddProfileEnd();
