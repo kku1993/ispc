@@ -2,6 +2,9 @@
  *  @file profile_ctx.h
  *  @brief Header file for profile context.
  */
+#ifndef _PROFILE_CTX_H_
+#define _PROFILE_CTX_H_
+
 #include <cstdint>
 #include <map>
 #include <stack>
@@ -79,3 +82,5 @@ class ProfileContext{
     std::string popRegion(SystemCounterState exit_state, int end_line);
     void updateCurrentRegion(const char *note, int line, uint64_t mask);
 };
+
+#endif /* _PROFILE_CTX_H_ */
