@@ -25,8 +25,10 @@ export void foo(uniform double arr[], uniform int len) {
   } else {
     if (a == 1)
       b = 1;
-    else
+    else if (a == 2)
       b = 2;
+    else
+      b = 3;
   }
 
   bar(b);

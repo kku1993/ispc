@@ -15,6 +15,9 @@
   SWITCH 4
   FUNCTION 5
 ```
+- Handling `if` regions:
+  - `else if` is treated like `if`. So if the code has the structure `if ... else if ... else ...`, it will be treated as 2 separate `if`, the first one without an `else` clause and the second one with. 
+  - Lane usage for each case can be determined from the line number (ie: smaller line number is the true case)
 
 TODO
 ====
