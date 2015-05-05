@@ -6,15 +6,6 @@
     - Fine grain control of what to measure
     - Can control how detailed the profiler should be
 - Put the provided macros around calls to ISPC functions in cpp file.
-- Region types:
-```
-  IF_UNIFORM 0
-  IF_VARYING 1
-  LOOP 2
-  FOREACH 3
-  SWITCH 4
-  FUNCTION 5
-```
 - Handling `if` regions:
   - `else if` is treated like `if`. So if the code has the structure `if ... else if ... else ...`, it will be treated as 2 separate `if`, the first one without an `else` clause and the second one with. 
   - Lane usage for each case can be determined from the line number (ie: smaller line number is the true case)
@@ -24,7 +15,40 @@ TODO
 - Allow calls to ProfileInit from within ISPC.
 - Test compability with pthreads and processes.
 - Allow user to decide what kinds of regions to log.
-- Explain the region design concept.
+- User program must be compiled with `-lpthread`
+
+Profile Context vs Region
+=========================
+- Context:
+  - Only 1 context per task
+  - Can be called in a nested fashion
+  - Initialized when the user uses the provided macro OR upon task launch
+  - Holds all regions within a task that are being profiled
+
+- Region:
+  - Key points in an ISPC program where control flow can diverge
+  - Minimum resolution of what the user can control to profile
+  - Region types:
+```
+  IF_UNIFORM 0
+  IF_VARYING 1
+  LOOP 2
+  FOREACH 3
+  SWITCH 4
+  FUNCTION 5
+```
+
+Internal API
+============
+- `ISPCProfileInit`
+  - Initializes a new profile context.
+  - Automatically called upon task lauch.
+- `ISPCProfileComplete`
+  - Terminates the profile context in the current task.
+- `ISPCProfileStart`
+  - Add a new profile region to the current profile context.
+- `ISPCProfileEnd`
+  - Ends the most recent profile region.
 
 Setup
 =====
