@@ -168,20 +168,14 @@ void ProfileContext::pushRegion(ProfileRegion *r) {
 
 // Removes the most recent profile region.
 // Return the JSON for the region.
-std::string ProfileContext::popRegion(SystemCounterState exit_state, 
-    int end_line) {
+ProfileRegion *ProfileContext::popRegion() {
   if (this->regions.empty())
     return NULL;
 
   ProfileRegion *r = this->regions.top();
-  r->updateExitStatus(exit_state); 
-  r->updateEndLine(end_line); 
-
-  std::string json(r->outputJSON());
-
   this->regions.pop();
 
-  return json;
+  return r;
 }
 
 // Update the most recent profile region.

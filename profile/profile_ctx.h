@@ -79,7 +79,7 @@ class ProfileContext{
     ProfileContext();
     ~ProfileContext();
     void pushRegion(ProfileRegion *);
-    std::string popRegion(SystemCounterState exit_state, int end_line);
+    ProfileRegion *popRegion();
     void updateCurrentRegion(const char *note, int line, uint64_t mask);
 };
 

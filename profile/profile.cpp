@@ -38,8 +38,8 @@ static PCM *monitor;
 // Context to keep track of the current profile region in scope.
 static ProfileContext *ctx = new ProfileContext();
 
-// List to keep outputs of regions that have left their scopes.
-static std::list<std::string> region_json;
+// List to keep old regions that have left their scopes.
+static std::list<ProfileRegion *> old_regions;
 
 /*
 static void mask_to_str(uint64_t mask, char *buffer) {
@@ -88,7 +88,7 @@ void ISPCProfileComplete() {
   struct stat st;
   if (stat(dir, &st) == -1 && mkdir(dir, 0700) == -1) {
     printf("ERROR: Profiler failed to create directory %s\n", dir);
-    region_json.clear();
+    old_regions.clear();
     return;
   }
 
@@ -99,20 +99,21 @@ void ISPCProfileComplete() {
   FILE *fp = fopen(outname, "w+");
   if (fp == NULL) {
     printf("ERROR: Profiler failed to open output file %s\n", outname);
-    region_json.clear();
+    old_regions.clear();
     return;
   }
 
   // Output json for each region.
   fprintf(fp, "[\n");
-  while (!region_json.empty()) {
-    char comma = region_json.size() == 1 ? ' ' : ',';
-    fprintf(fp, "%s%c\n", region_json.front().c_str(), comma);
-    region_json.pop_front();
+  while (!old_regions.empty()) {
+    char comma = old_regions.size() == 1 ? ' ' : ',';
+    ProfileRegion *r = old_regions.front();
+    fprintf(fp, "%s%c\n", r->outputJSON().c_str(), comma);
+    old_regions.pop_front();
   }
   fprintf(fp, "]");
 
-  region_json.clear();
+  old_regions.clear();
   profile_running = false;
 }
 
@@ -130,8 +131,11 @@ void ISPCProfileEnd(int end_line) {
   SystemCounterState after_sstate = getSystemCounterState();
 
   // Remove the profile region from the profiling context.
-  std::string json = ctx->popRegion(after_sstate, end_line);
-  region_json.push_back(json); 
+  ProfileRegion *r = ctx->popRegion();
+  r->updateExitStatus(after_sstate);
+  r->updateEndLine(end_line);
+
+  old_regions.push_back(r); 
 }
 
 void ISPCProfileIteration(const char *note, int line, int64_t mask) {
