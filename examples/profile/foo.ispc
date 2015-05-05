@@ -1,6 +1,5 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-/*
 task void foo_task() {
   foreach (i = 1 ... 1000) {
     int y = 0;
@@ -9,7 +8,6 @@ task void foo_task() {
     }
   }
 }
-*/
 
 void bar(int a) {
   int b = a + 100;
@@ -17,7 +15,7 @@ void bar(int a) {
 }
 
 export void foo(uniform double arr[], uniform int len) {
-  //launch foo_task();
+  launch foo_task();
   int a = programIndex;
   int b = 1;
   int c = 1;

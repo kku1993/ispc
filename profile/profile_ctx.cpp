@@ -187,6 +187,12 @@ ProfileContext::~ProfileContext() {
 }
 
 void ProfileContext::outputProfile() {
+  // Don't output if there are no region has completed profiling in this 
+  // context.
+  if (this->old_regions.size() == 0) {
+    return;
+  }
+
   // Create output folder.
   const char *dir = "profile_results";
   struct stat st;
@@ -199,7 +205,8 @@ void ProfileContext::outputProfile() {
   // Open file for output.
   char outname[NAME_MAX + strlen(dir) + 100];
   memset(outname, '\0', sizeof (char) * (NAME_MAX + strlen(dir) + 100));
-  sprintf(outname, "%s/%s.%d", dir, this->profile_name, this->profile_line);
+  sprintf(outname, "%s/%s.line%d.task%d", dir, this->profile_name, 
+      this->profile_line, this->task_id);
   FILE *fp = fopen(outname, "w+");
   if (fp == NULL) {
     printf("ERROR: Profiler failed to open output file %s\n", outname);

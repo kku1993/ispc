@@ -3878,6 +3878,12 @@ FunctionEmitContext::LaunchInst(llvm::Value *callee,
       allocArgs.push_back(launchGroupHandlePtr);
       allocArgs.push_back(structSize);
       allocArgs.push_back(LLVMInt32(align));
+      // filename as string
+      allocArgs.push_back(lGetStringAsValue(bblock, currentPos.name));
+      // line number
+      allocArgs.push_back(LLVMInt32(currentPos.first_line));
+      // number of lanes
+      allocArgs.push_back(LLVMInt32(g->target->getVectorWidth()));
       llvm::Value *voidmem = CallInst(falloc, NULL, allocArgs, "args_ptr");
       llvm::Value *voidi64 = PtrToIntInst(voidmem, "args_i64");
       llvm::BasicBlock* if_true  = CreateBasicBlock("if_true");
@@ -3928,6 +3934,12 @@ FunctionEmitContext::LaunchInst(llvm::Value *callee,
       args.push_back(launchCount[0]);
       args.push_back(launchCount[1]);
       args.push_back(launchCount[2]);
+      // filename as string
+      args.push_back(lGetStringAsValue(bblock, currentPos.name));
+      // line number
+      args.push_back(LLVMInt32(currentPos.first_line));
+      // number of lanes
+      args.push_back(LLVMInt32(g->target->getVectorWidth()));
       llvm::Value *ret =  CallInst(flaunch, NULL, args, "");
       return ret;
     }
@@ -3964,6 +3976,12 @@ FunctionEmitContext::LaunchInst(llvm::Value *callee,
     allocArgs.push_back(launchGroupHandlePtr);
     allocArgs.push_back(structSize);
     allocArgs.push_back(LLVMInt32(align));
+    // filename as string
+    allocArgs.push_back(lGetStringAsValue(bblock, currentPos.name));
+    // line number
+    allocArgs.push_back(LLVMInt32(currentPos.first_line));
+    // number of lanes
+    allocArgs.push_back(LLVMInt32(g->target->getVectorWidth()));
     llvm::Value *voidmem = CallInst(falloc, NULL, allocArgs, "args_ptr");
     llvm::Value *argmem = BitCastInst(voidmem, pt);
 
@@ -3996,6 +4014,12 @@ FunctionEmitContext::LaunchInst(llvm::Value *callee,
     args.push_back(launchCount[0]);
     args.push_back(launchCount[1]);
     args.push_back(launchCount[2]);
+    // filename as string
+    args.push_back(lGetStringAsValue(bblock, currentPos.name));
+    // line number
+    args.push_back(LLVMInt32(currentPos.first_line));
+    // number of lanes
+    args.push_back(LLVMInt32(g->target->getVectorWidth()));
     return CallInst(flaunch, NULL, args, "");
 }
 
