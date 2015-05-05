@@ -20,6 +20,9 @@ export void foo(uniform double arr[], uniform int len) {
   //launch foo_task();
   int a = programIndex;
   int b = 1;
+  int c = 1;
+
+  // Testing nested if statements and else if statements.
   if (a == 0) {
     b = 0;
   } else {
@@ -31,14 +34,24 @@ export void foo(uniform double arr[], uniform int len) {
       b = 3;
   }
 
+  // Test coherent control flow detection.
+  if (c == 1) {
+    c = 0;
+  } else {
+    c = -1;
+  }
+
+  // Testing function call.
   bar(b);
 
+  // Test for loop nested in if.
   if (a == 0) {
     for (int i = 0; i < MIN(5, len); i++) {
       b += (int) arr[i];
     }
   }
   
+  // Test foreach.
   foreach (i = 1 ... 5) {
     b = 0;
   }
