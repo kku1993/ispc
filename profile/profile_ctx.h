@@ -9,6 +9,7 @@
 #include <map>
 #include <stack>
 #include <string>
+#include <list>
 
 #include "intel_pcm/cpucounters.h"
 
@@ -38,9 +39,6 @@ class ProfileRegion{
     int end_line;
     int task;
 
-    // Total number of available lanes.
-    int total_num_lanes;
-
     // Initial mask upon entering the region.
     uint64_t initial_mask;
 
@@ -53,7 +51,7 @@ class ProfileRegion{
     LaneUsageMap fullMaskMap;
 
   public:
-    ProfileRegion(const char*, int, int, int, int, int, uint64_t, 
+    ProfileRegion(const char*, int, int, int, int, uint64_t, 
         SystemCounterState);
     ~ProfileRegion();
     void setId(rid_t);
@@ -63,7 +61,7 @@ class ProfileRegion{
     double getRegionL3HitRatio();
     double getRegionL2HitRatio();
     uint64_t getRegionBytesRead();
-    void updateLineMask(int line, uint64_t mask);
+    void updateLineMask(int line, uint64_t mask, int total_num_lanes);
     std::string outputJSON();
 };
 
@@ -80,11 +78,21 @@ class ProfileContext{
     // ended.
     std::stack<ProfileRegion *> regions;
 
+    const char *profile_name;
+    int profile_line;
+    int verbose;
+    // Total number of available lanes.
+    int total_num_lanes;
+
+    // List to keep old regions that have left their scopes.
+    std::list<ProfileRegion *> old_regions;
+
   public:
-    ProfileContext();
+    ProfileContext(const char* name, int line, int num_lanes, int verbose);
     ~ProfileContext();
+    void outputProfile();
     void pushRegion(ProfileRegion *);
-    ProfileRegion *popRegion();
+    void popRegion(SystemCounterState exit_state, int end_line);
     void updateCurrentRegion(const char *note, int line, uint64_t mask);
 };
 
