@@ -44,8 +44,13 @@ class ProfileRegion{
     // Initial mask upon entering the region.
     uint64_t initial_mask;
 
-    // Map line within a region to lane usage information.
+    // Map line within a region to (total number of of lanes available when 
+    // the line was run, total number of lanes that the line ran with).
     LaneUsageMap laneUsageMap;
+
+    // Map line to (number of times the line was run, number of times the line 
+    // was run with full mask)
+    LaneUsageMap fullMaskMap;
 
   public:
     ProfileRegion(const char*, int, int, int, int, int, uint64_t, 

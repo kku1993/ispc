@@ -74,20 +74,28 @@ uint64_t ProfileRegion::getRegionBytesRead() {
   return getBytesReadFromMC(this->entry_sstate, this->exit_sstate);
 }
 
-void ProfileRegion::updateLineMask(int line, uint64_t mask) {
-  int lanes_used = lanesUsed(this->total_num_lanes, mask);
-
-  LaneUsageMap::iterator it = this->laneUsageMap.find(line);
-  if (it == this->laneUsageMap.end()) {
+static void insertUsageMap(LaneUsageMap &m, int line, int dtotal, int dval) {
+  LaneUsageMap::iterator it = m.find(line);
+  if (it == m.end()) {
     // We haven't encountered this line before.
-    this->laneUsageMap.insert(it, std::make_pair(line, 
-        std::make_pair(this->total_num_lanes, lanes_used)));
+    m.insert(it, std::make_pair(line, std::make_pair(dtotal, dval)));
   } else {
     std::pair<int, int> usage = it->second;
-    int total_lanes = usage.first + this->total_num_lanes;
-    int total_used_lanes = usage.second + lanes_used;
-    this->laneUsageMap[line] = std::make_pair(total_lanes, total_used_lanes);
+    int total = usage.first + dtotal;
+    int val = usage.second + dval;
+    m[line] = std::make_pair(total, val);
   }
+}
+
+void ProfileRegion::updateLineMask(int line, uint64_t mask) {
+  int lanes_used = lanesUsed(this->total_num_lanes, mask);
+  bool is_full_mask = lanes_used == this->total_num_lanes;
+
+  // Update lane usage map.
+  insertUsageMap(this->laneUsageMap, line, this->total_num_lanes, lanes_used);
+
+  // Update full mask map.
+  insertUsageMap(this->fullMaskMap, line, 1, is_full_mask ? 1 : 0);
 }
 
 std::string ProfileRegion::outputJSON() {
@@ -101,6 +109,7 @@ std::string ProfileRegion::outputJSON() {
       "\"total_num_lanes\":0,"
       "\"initial_mask\":0,"
       "\"lane_usage\":[],"
+      "\"full_mask_percentage\": [],"
       "\"ipc\":0,"
       "\"l2_hit\":0,"
       "\"l3_hit\":0,"
@@ -129,12 +138,26 @@ std::string ProfileRegion::outputJSON() {
       it != this->laneUsageMap.end(); ++it) {
     Value line(kObjectType);
 
-    double percent = it->second.second/double(it->second.first);
+    double percent = it->second.second/double(it->second.first) * 100;
 
     line.AddMember("line", it->first, allocator);
     line.AddMember("percent", percent, allocator);
 
     lane_usage.PushBack(line, allocator); 
+  }
+
+  // Add list of percent of full mask runs by line number.
+  Value &full_mask = d["full_mask_percentage"];
+  for (LaneUsageMap::iterator it = this->fullMaskMap.begin(); 
+      it != this->fullMaskMap.end(); ++it) {
+    Value line(kObjectType);
+
+    double percent = it->second.second/double(it->second.first) * 100;
+
+    line.AddMember("line", it->first, allocator);
+    line.AddMember("percent", percent, allocator);
+
+    full_mask.PushBack(line, allocator); 
   }
   
   // Stringify the DOM
