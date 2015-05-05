@@ -18,7 +18,7 @@ clean:
 veryclean:
 		/bin/rm -rf $(OBJDIR) *~ $(LIB_NAME).o; cd $(PCMDIR); make clean
 
-OBJS=$(OBJDIR)/tasksys.o $(OBJDIR)/profile_ctx.o $(OBJDIR)/profile.o
+OBJS=$(OBJDIR)/profile_ctx.o $(OBJDIR)/profile.o
 PCMOBJS=$(PCMDIR)/cpucounters.o $(PCMDIR)/client_bw.o $(PCMDIR)/pci.o $(PCMDIR)/msr.o
 
 $(LIB_NAME).o: $(OBJS) $(PCMOBJS) dirs

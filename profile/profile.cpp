@@ -24,6 +24,9 @@ static ProfileContextMap ctx_map;
 // Mutex to guard the map of ProfileContexts
 static pthread_mutex_t ctx_map_lock = PTHREAD_MUTEX_INITIALIZER;
 
+// Counter to assign task id to contexts.
+static int task_id_counter = 0;
+
 // Intel performance monitor
 static PCM *monitor;
 
@@ -69,7 +72,8 @@ void ISPCProfileInit(const char *file, int line, int total_lanes, int verbose) {
   ProfileContextMap::iterator it = ctx_map.find(thread);
   if (it == ctx_map.end()) {
     // Create new context.
-    ProfileContext *ctx = new ProfileContext(file, line, total_lanes, verbose);
+    ProfileContext *ctx = new ProfileContext(file, line, total_lanes, verbose,
+      task_id_counter++);
     ctx_map[thread] = ctx;
   } 
 
@@ -84,11 +88,15 @@ void ISPCProfileComplete() {
 
 void ISPCProfileStart(const char *note, int region_type, int start_line, 
     int end_line, int task, uint64_t mask) { 
+  
+  // Using task id assigned to context to identify a region's task instead.
+  (void) task;
+
   // Get Intel performance monitor state
   SystemCounterState state = getSystemCounterState();
 
   ProfileRegion *region = new ProfileRegion(note, region_type, start_line, 
-      end_line, task, mask, state);
+      end_line, mask, state);
 
   ProfileContext *ctx = getContext(false);
 

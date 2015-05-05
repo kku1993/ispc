@@ -51,8 +51,7 @@ class ProfileRegion{
     LaneUsageMap fullMaskMap;
 
   public:
-    ProfileRegion(const char*, int, int, int, int, uint64_t, 
-        SystemCounterState);
+    ProfileRegion(const char*, int, int, int, uint64_t, SystemCounterState);
     ~ProfileRegion();
     void setId(rid_t);
     void updateExitStatus(SystemCounterState);
@@ -67,6 +66,10 @@ class ProfileRegion{
 
 class ProfileContext{
   private:
+    // Id of the task the context is in. Each task can only have at most 1 
+    // context.
+    int task_id;
+
     // Counter for assigning unique region ids.
     // The id is assigned in monotonically increasing order, so it can also 
     // be used to identify which region started first (useful when dealing with
@@ -88,7 +91,8 @@ class ProfileContext{
     std::list<ProfileRegion *> old_regions;
 
   public:
-    ProfileContext(const char* name, int line, int num_lanes, int verbose);
+    ProfileContext(const char* name, int line, int num_lanes, int verbose, 
+        int task_id);
     ~ProfileContext();
     void outputProfile();
     void pushRegion(ProfileRegion *);

@@ -33,12 +33,11 @@ static int lanesUsed(int total_num_lanes, uint64_t mask) {
 // ProfileRegion
 ////////////////////////////////////////////
 ProfileRegion::ProfileRegion(const char *note, int region_type, int start_line,
-    int end_line, int task, uint64_t mask, SystemCounterState state) {
+    int end_line, uint64_t mask, SystemCounterState state) {
   this->region_note = note;
   this->region_type = region_type;
   this->start_line = start_line;
   this->end_line = end_line;
-  this->task = task;
   this->initial_mask = mask;
   this->entry_sstate = state;
 }
@@ -109,7 +108,6 @@ std::string ProfileRegion::outputJSON() {
       "\"region_type\":0,"
       "\"start_line\":0,"
       "\"end_line\":0,"
-      "\"task\":0,"
       "\"initial_mask\":0,"
       "\"lane_usage\":[],"
       "\"full_mask_percentage\": [],"
@@ -126,7 +124,6 @@ std::string ProfileRegion::outputJSON() {
   d["region_type"].SetInt(this->region_type);
   d["start_line"].SetInt(this->start_line);
   d["end_line"].SetInt(this->end_line);
-  d["task"].SetInt(this->task);
   d["initial_mask"].SetUint64(this->initial_mask);
   d["ipc"].SetDouble(getRegionIPC());
   d["l2_hit"].SetDouble(getRegionL2HitRatio());
@@ -175,7 +172,7 @@ std::string ProfileRegion::outputJSON() {
 // ProfileContext
 ////////////////////////////////////////////
 ProfileContext::ProfileContext(const char* name, int line, int num_lanes, 
-    int verbose) {
+    int verbose, int task_id) {
   this->region_id_counter = 0;
 
   (void) verbose;
@@ -183,6 +180,7 @@ ProfileContext::ProfileContext(const char* name, int line, int num_lanes,
   this->profile_name = name;
   this->profile_line = line;
   this->total_num_lanes = num_lanes;
+  this->task_id = task_id;
 }
 
 ProfileContext::~ProfileContext() {
@@ -213,8 +211,10 @@ void ProfileContext::outputProfile() {
   fprintf(fp, "{"
       "\"file\":\"%s\","
       "\"line\":%d,"
-      "\"total_num_lanes\":%d,", this->profile_name, this->profile_line, 
-      this->total_num_lanes);
+      "\"total_num_lanes\":%d,"
+      "\"task\":%d,", 
+      this->profile_name, this->profile_line, 
+      this->total_num_lanes, this->task_id);
 
   // Output json for each region.
   fprintf(fp, "\"regions\": [\n");
