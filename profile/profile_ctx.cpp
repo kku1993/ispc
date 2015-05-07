@@ -89,15 +89,25 @@ static void insertUsageMap(LaneUsageMap &m, int line, int dtotal, int dval) {
   }
 }
 
+// total_num_lanes = SIMD width of the machine
 void ProfileRegion::updateLineMask(int line, uint64_t mask, 
     int total_num_lanes) {
   int lanes_used = lanesUsed(total_num_lanes, mask);
-  bool is_full_mask = lanes_used == total_num_lanes;
 
   // Update lane usage map.
   insertUsageMap(this->laneUsageMap, line, total_num_lanes, lanes_used);
 
   // Update full mask map.
+
+  // Is full mask is based on the number of lanes available to the region 
+  // upon entry into the region. 
+  // To handle unmasked regions, we take the max of the initial mask usage
+  // and the current usage. Current usage can only be greater than the initial
+  // usage in unmasked regions.
+  int lanes_available = MAX(lanesUsed(total_num_lanes, this->initial_mask), 
+      lanes_used);
+  bool is_full_mask = (lanes_used == lanes_available);
+
   insertUsageMap(this->fullMaskMap, line, 1, is_full_mask ? 1 : 0);
 }
 
