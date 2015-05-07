@@ -202,11 +202,19 @@ void ProfileContext::outputProfile() {
     return;
   }
 
+  // Get current time.
+  struct tm *tm;
+  time_t t;
+  char date[128];
+  time(&t);
+  tm = localtime(&t);
+  strftime(date, sizeof (date), "%Y%m%d%H%M%S", tm);
+
   // Open file for output.
   char outname[NAME_MAX + strlen(dir) + 100];
   memset(outname, '\0', sizeof (char) * (NAME_MAX + strlen(dir) + 100));
-  sprintf(outname, "%s/%s.line%d.task%d", dir, this->profile_name, 
-      this->profile_line, this->task_id);
+  sprintf(outname, "%s/%s.line%d.task%d.%s", dir, this->profile_name, 
+      this->profile_line, this->task_id, date);
   FILE *fp = fopen(outname, "w+");
   if (fp == NULL) {
     printf("ERROR: Profiler failed to open output file %s\n", outname);
