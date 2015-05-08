@@ -5,7 +5,7 @@ using namespace ispc;
 int main() {
   double arr[1000000];
 
-  ISPC_PROFILE_BEGIN(1)
+  ISPC_PROFILE_BEGIN
   foo(arr, 1000000);
   ISPC_PROFILE_END
 

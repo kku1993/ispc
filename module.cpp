@@ -47,6 +47,7 @@
 #include "stmt.h"
 #include "opt.h"
 #include "llvmutil.h"
+#include "profile/profile_flags.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -159,7 +160,7 @@ static void EmitProfileHeader(FILE *f) {
     fprintf(f, "}\n");
 
     int num_lanes = g->target->getVectorWidth();
-    fprintf(f, "#define ISPC_PROFILE_BEGIN(v) ISPCProfileInit(__FILE__, __LINE__, %d, (v)); \n", num_lanes);
+    fprintf(f, "#define ISPC_PROFILE_BEGIN ISPCProfileInit(__FILE__, __LINE__, %d, %d); \n", num_lanes, ISPC_PROFILE_ALL);
     fprintf(f, "#define ISPC_PROFILE_END ISPCProfileComplete(); \n");
 }
 
