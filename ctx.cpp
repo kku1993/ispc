@@ -44,6 +44,7 @@
 #include "expr.h"
 #include "module.h"
 #include "sym.h"
+#include "profile/profile_region_types.h"
 #include <map>
 #include <llvm/Support/Dwarf.h>
 #if defined(LLVM_3_2)
@@ -542,12 +543,16 @@ FunctionEmitContext::BranchIfMaskNone(llvm::BasicBlock *btrue, llvm::BasicBlock 
 void
 FunctionEmitContext::StartUniformIf() {
     controlFlowInfo.push_back(CFInfo::GetIf(true, GetInternalMask()));
+    if (g->emitProfile)
+        AddProfileStart("Start Uniform If", PROFILE_REGION_IF_UNIFORM);
 }
 
 
 void
 FunctionEmitContext::StartVaryingIf(llvm::Value *oldMask) {
     controlFlowInfo.push_back(CFInfo::GetIf(false, oldMask));
+    if (g->emitProfile)
+        AddProfileStart("Start Varying If", PROFILE_REGION_IF_VARYING);
 }
 
 
@@ -611,6 +616,9 @@ FunctionEmitContext::EndIf() {
                            notBreakOrContinue, "new_mask");
         SetInternalMask(newMask);
     }
+
+    if (g->emitProfile) 
+        AddProfileEnd();
 }
 
 
@@ -640,6 +648,9 @@ FunctionEmitContext::StartLoop(llvm::BasicBlock *bt, llvm::BasicBlock *ct,
     breakTarget = bt;
     continueTarget = ct;
     blockEntryMask = NULL; // this better be set by the loop!
+
+    if (g->emitProfile) 
+        AddProfileStart("Start Loop", PROFILE_REGION_LOOP);
 }
 
 
@@ -655,6 +666,9 @@ FunctionEmitContext::EndLoop() {
         // into the loop, but still leaving off any lanes that executed a
         // 'return' statement.
         restoreMaskGivenReturns(ci->savedMask);
+
+    if (g->emitProfile) 
+        AddProfileEnd();
 }
 
 
@@ -689,6 +703,9 @@ FunctionEmitContext::StartForeach(ForeachType ft) {
     continueTarget = NULL; // should be set by SetContinueTarget()
 
     blockEntryMask = NULL;
+
+    if (g->emitProfile) 
+        AddProfileStart("Start ForEach Loop", PROFILE_REGION_FOREACH);
 }
 
 
@@ -696,6 +713,8 @@ void
 FunctionEmitContext::EndForeach() {
     CFInfo *ci = popCFState();
     AssertPos(currentPos, ci->IsForeach());
+    if (g->emitProfile) 
+        AddProfileEnd();
 }
 
 
@@ -989,6 +1008,9 @@ FunctionEmitContext::StartSwitch(bool cfIsUniform, llvm::BasicBlock *bbBreak) {
     defaultBlock = NULL;
     caseBlocks = NULL;
     nextBlocks = NULL;
+
+    if (g->emitProfile) 
+        AddProfileStart("Start Switch", PROFILE_REGION_SWITCH);
 }
 
 
@@ -999,6 +1021,9 @@ FunctionEmitContext::EndSwitch() {
     CFInfo *ci = popCFState();
     if (ci->IsVarying() && bblock != NULL)
         restoreMaskGivenReturns(ci->savedMask);
+
+    if (g->emitProfile) 
+        AddProfileEnd();
 }
 
 
@@ -1636,6 +1661,83 @@ FunctionEmitContext::AddInstrumentationPoint(const char *note) {
     args.push_back(LaneMask(GetFullMask()));
 
     llvm::Function *finst = m->module->getFunction("ISPCInstrument");
+    CallInst(finst, NULL, args, "");
+}
+
+
+void
+FunctionEmitContext::AddProfileStart(const char *note, int region_type) {
+    AssertPos(currentPos, note != NULL);
+    if (!g->emitProfile)
+        return;
+
+    std::vector<llvm::Value *> args;
+    // arg 1: provided note
+    args.push_back(lGetStringAsValue(bblock, note));
+    // arg 2: region type
+    args.push_back(LLVMInt32(region_type));
+    // arg 3: start line number
+    args.push_back(LLVMInt32(currentPos.first_line));
+    // arg 4: end line number
+    args.push_back(LLVMInt32(currentPos.last_line));
+    // arg 5: TODO current task
+    args.push_back(LLVMInt32(1)); 
+    // arg 6: current mask, movmsk'ed down to an int64
+    args.push_back(LaneMask(GetFullMask()));
+
+    llvm::Function *finst = m->module->getFunction("ISPCProfileStart");
+    CallInst(finst, NULL, args, "");
+}
+
+
+void
+FunctionEmitContext::AddProfileIteration(const char *note) {
+    AssertPos(currentPos, note != NULL);
+    if (!g->emitProfile)
+        return;
+
+    std::vector<llvm::Value *> args;
+    // arg 1: provided note
+    args.push_back(lGetStringAsValue(bblock, note));
+    // arg 2: line number
+    args.push_back(LLVMInt32(currentPos.first_line));
+    // arg 3: current mask, movmsk'ed down to an int64
+    args.push_back(LaneMask(GetFullMask()));
+
+    llvm::Function *finst = m->module->getFunction("ISPCProfileIteration");
+    CallInst(finst, NULL, args, "");
+}
+
+
+void
+FunctionEmitContext::AddProfileIf(const char *note) {
+    AssertPos(currentPos, note != NULL);
+    if (!g->emitProfile)
+        return;
+
+    std::vector<llvm::Value *> args;
+    // arg 1: provided note
+    args.push_back(lGetStringAsValue(bblock, note));
+    // arg 2: line number
+    args.push_back(LLVMInt32(currentPos.first_line));
+    // arg 3: current mask, movmsk'ed down to an int64
+    args.push_back(LaneMask(GetFullMask()));
+
+    llvm::Function *finst = m->module->getFunction("ISPCProfileIf");
+    CallInst(finst, NULL, args, "");
+}
+
+
+void
+FunctionEmitContext::AddProfileEnd() {
+    if (!g->emitProfile)
+        return;
+
+    std::vector<llvm::Value *> args;
+    // arg 1: line number
+    args.push_back(LLVMInt32(currentPos.last_line));
+
+    llvm::Function *finst = m->module->getFunction("ISPCProfileEnd");
     CallInst(finst, NULL, args, "");
 }
 
@@ -3742,6 +3844,8 @@ FunctionEmitContext::CallInst(llvm::Value *func, const FunctionType *funcType,
 
 llvm::Instruction *
 FunctionEmitContext::ReturnInst() {
+    AddProfileEnd();
+
     if (launchedTasks)
         // Add a sync call at the end of any function that launched tasks
         SyncInst();
@@ -3799,6 +3903,12 @@ FunctionEmitContext::LaunchInst(llvm::Value *callee,
       allocArgs.push_back(launchGroupHandlePtr);
       allocArgs.push_back(structSize);
       allocArgs.push_back(LLVMInt32(align));
+      // filename as string
+      allocArgs.push_back(lGetStringAsValue(bblock, currentPos.name));
+      // line number
+      allocArgs.push_back(LLVMInt32(currentPos.first_line));
+      // number of lanes
+      allocArgs.push_back(LLVMInt32(g->target->getVectorWidth()));
       llvm::Value *voidmem = CallInst(falloc, NULL, allocArgs, "args_ptr");
       llvm::Value *voidi64 = PtrToIntInst(voidmem, "args_i64");
       llvm::BasicBlock* if_true  = CreateBasicBlock("if_true");
@@ -3849,6 +3959,12 @@ FunctionEmitContext::LaunchInst(llvm::Value *callee,
       args.push_back(launchCount[0]);
       args.push_back(launchCount[1]);
       args.push_back(launchCount[2]);
+      // filename as string
+      args.push_back(lGetStringAsValue(bblock, currentPos.name));
+      // line number
+      args.push_back(LLVMInt32(currentPos.first_line));
+      // number of lanes
+      args.push_back(LLVMInt32(g->target->getVectorWidth()));
       llvm::Value *ret =  CallInst(flaunch, NULL, args, "");
       return ret;
     }
@@ -3885,6 +4001,12 @@ FunctionEmitContext::LaunchInst(llvm::Value *callee,
     allocArgs.push_back(launchGroupHandlePtr);
     allocArgs.push_back(structSize);
     allocArgs.push_back(LLVMInt32(align));
+    // filename as string
+    allocArgs.push_back(lGetStringAsValue(bblock, currentPos.name));
+    // line number
+    allocArgs.push_back(LLVMInt32(currentPos.first_line));
+    // number of lanes
+    allocArgs.push_back(LLVMInt32(g->target->getVectorWidth()));
     llvm::Value *voidmem = CallInst(falloc, NULL, allocArgs, "args_ptr");
     llvm::Value *argmem = BitCastInst(voidmem, pt);
 
@@ -3917,6 +4039,12 @@ FunctionEmitContext::LaunchInst(llvm::Value *callee,
     args.push_back(launchCount[0]);
     args.push_back(launchCount[1]);
     args.push_back(launchCount[2]);
+    // filename as string
+    args.push_back(lGetStringAsValue(bblock, currentPos.name));
+    // line number
+    args.push_back(LLVMInt32(currentPos.first_line));
+    // number of lanes
+    args.push_back(LLVMInt32(g->target->getVectorWidth()));
     return CallInst(flaunch, NULL, args, "");
 }
 

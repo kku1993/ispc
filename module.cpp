@@ -58,6 +58,7 @@
 #include <set>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 #ifdef ISPC_NVPTX_ENABLED
 #include <map>
 #endif /* ISPC_NVPTX_ENABLED */
@@ -140,6 +141,26 @@ void RegisterDependency(const std::string &fileName)
 {
   if (fileName[0] != '<' && fileName != "stdlib.ispc")
     registeredDependencies.insert(fileName);
+}
+
+static void EmitProfileHeader(FILE *f) {
+    if (!g->emitProfile) {
+        return;
+    }
+
+    fprintf(f, "#define ISPC_PROFILE 1\n");
+    fprintf(f, "extern \"C\" {\n");
+    fprintf(f, "  void ISPCProfileInit(const char *fn, int line, int num_lanes, int verbose); \n");
+    fprintf(f, "  void ISPCProfileComplete(); \n");
+    fprintf(f, "  void ISPCProfileStart(const char *note, int region_type, int line, int type, int task, uint64_t mask); \n");
+    fprintf(f, "  void ISPCProfileIteration(const char *note, int line, uint64_t mask); \n");
+    fprintf(f, "  void ISPCProfileIf(const char *note, int line, uint64_t mask); \n");
+    fprintf(f, "  void ISPCProfileEnd(int end_line); \n");
+    fprintf(f, "}\n");
+
+    int num_lanes = g->target->getVectorWidth();
+    fprintf(f, "#define ISPC_PROFILE_BEGIN(v) ISPCProfileInit(__FILE__, __LINE__, %d, (v)); \n", num_lanes);
+    fprintf(f, "#define ISPC_PROFILE_END ISPCProfileComplete(); \n");
 }
 
 static void
@@ -2210,6 +2231,10 @@ Module::writeHeader(const char *fn) {
         fprintf(f, "}\n");
     }
 
+    if (g->emitProfile) {
+        EmitProfileHeader(f);
+    }
+
     // end namespace
     fprintf(f, "\n");
     fprintf(f, "\n#ifdef __cplusplus\nnamespace ispc { /* namespace */\n#endif // __cplusplus\n");
@@ -2315,12 +2340,15 @@ Module::writeDispatchHeader(DispatchHeaderInfo *DHI) {
 
       fprintf(f, "#include <stdint.h>\n\n");
 
-
       if (g->emitInstrumentation) {
         fprintf(f, "#define ISPC_INSTRUMENTATION 1\n");
         fprintf(f, "extern \"C\" {\n");
         fprintf(f, "  void ISPCInstrument(const char *fn, const char *note, int line, uint64_t mask);\n");
         fprintf(f, "}\n");
+      }
+
+      if (g->emitProfile) {
+          EmitProfileHeader(f);
       }
 
       // end namespace

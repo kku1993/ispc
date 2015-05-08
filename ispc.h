@@ -596,6 +596,10 @@ struct Globals {
         manual.) */
     bool emitInstrumentation;
 
+    /** Indicates whether to emit calls to the internal profiler to log
+        various performance metrics. */
+    bool emitProfile;
+
     /** Indicates whether ispc should generate debugging symbols for the
         program in its output. */
     bool generateDebuggingSymbols;

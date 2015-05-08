@@ -1,0 +1,3 @@
+[submodule "profile/rapidjson"]
+	path = profile/rapidjson
+	url = git@github.com:miloyip/rapidjson.git

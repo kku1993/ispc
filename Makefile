@@ -253,13 +253,13 @@ print_llvm_src: llvm_check
 	@echo Using compiler to build: `$(CXX) --version | head -1`
 
 clean:
-	/bin/rm -rf objs ispc
+	/bin/rm -rf objs ispc; cd profile; make clean
 
 doxygen:
 	/bin/rm -rf docs/doxygen
 	doxygen doxygen.cfg
 
-ispc: print_llvm_src dirs $(OBJS)
+ispc: print_llvm_src dirs $(OBJS) profile/profile.o
 	@echo Creating ispc executable
 	@$(CXX) $(OPT) $(LDFLAGS) -o $@ $(OBJS) $(ISPC_LIBS)
 
@@ -280,6 +280,11 @@ asan: OPT+=-fsanitize=address
 # Do debug build, i.e. -O0 -g
 debug: ispc
 debug: OPT=-O0 -g
+
+# Internal profiler
+profile/profile.o: profile/profile.cpp 
+	@echo Compiling $<
+	@cd profile; make
 
 objs/%.o: %.cpp
 	@echo Compiling $<

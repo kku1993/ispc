@@ -113,6 +113,7 @@ usage(int ret) {
     printf("    [-h <name>/--header-outfile=<name>]\tOutput filename for header\n");
     printf("    [-I <path>]\t\t\t\tAdd <path> to #include file search path\n");
     printf("    [--instrument]\t\t\tEmit instrumentation to gather performance data\n");
+    printf("    [--profile]\t\t\tEmit detailed profiling data to monitor performance\n");
     printf("    [--math-lib=<option>]\t\tSelect math library\n");
     printf("        default\t\t\t\tUse ispc's built-in math functions\n");
     printf("        fast\t\t\t\tUse high-performance but lower-accuracy math functions\n");
@@ -384,6 +385,8 @@ int main(int Argc, char *Argv[]) {
             g->dllExport = true;
         else if (!strcmp(argv[i], "--instrument"))
             g->emitInstrumentation = true;
+        else if (!strcmp(argv[i], "--profile"))
+            g->emitProfile = true;
         else if (!strcmp(argv[i], "-g")) {
             g->generateDebuggingSymbols = true;
         }
@@ -617,7 +620,8 @@ int main(int Argc, char *Argv[]) {
               "Program will be compiled and warnings/errors will "
               "be issued, but no output will be generated.");
 
-    return Module::CompileAndOutput(file, arch, cpu, target, generatePIC,
+    int success = Module::CompileAndOutput(file, arch, cpu, target, 
+                                    generatePIC,
                                     ot,
                                     outFileName,
                                     headerFileName,
@@ -625,4 +629,48 @@ int main(int Argc, char *Argv[]) {
                                     depsFileName,
                                     hostStubFileName,
                                     devStubFileName);
+    if (success != 0)
+      return 1;
+
+    if (g->emitProfile) {
+      // Link with internal profiler
+      char *cwd = get_current_dir_name();
+      if (cwd == NULL) {
+        Error(SourcePos(), "Failed to get current directory.");
+        return -1;
+      }
+
+      // Link into a temporary file
+      // TODO more robust way of getting the directory of the compiler
+      char pd[PATH_MAX], dir[PATH_MAX];
+      readlink("/proc/self/exe", dir, PATH_MAX);
+      int last_slash = 0;
+      for (int i = 0; i < PATH_MAX; i++) {
+        if (dir[i] == '\0')
+          break;
+        else if (dir[i] == '/')
+          last_slash = i;
+      }
+      memcpy(pd, dir, sizeof (char) * last_slash);
+      dir[last_slash] = '\0';
+
+      char cmd[PATH_MAX * 4];
+      memset(cmd, 0, sizeof (char) * PATH_MAX * 4);
+      sprintf(cmd, "ld -r -o %s/%s.ispc.o %s/%s %s/profile/libprofile.o",
+        cwd, outFileName, cwd, outFileName, pd);
+      
+      int ret = system(cmd);
+      if (ret != 0) {
+        free(cwd);
+        return ret;
+      }
+      
+      sprintf(cmd, "mv %s/%s.ispc.o %s/%s", cwd, outFileName, cwd, 
+          outFileName);
+
+      free(cwd);
+      return system(cmd);
+    }
+
+    return 0;
 }
