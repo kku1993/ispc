@@ -100,6 +100,11 @@ void ISPCProfileStart(const char *filename, int region_type, int start_line,
 
   ProfileContext *ctx = getContext(false);
 
+  if (ctx == NULL) {
+    fprintf(stderr, "Error: Profile region started without context.\n");
+    exit(1);
+  }
+
   ctx->pushRegion(region);
 }
 
