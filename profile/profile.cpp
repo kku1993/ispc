@@ -10,7 +10,7 @@
 extern "C" {
   void ISPCProfileInit(const char *fn, int line, int total_lanes, int verbose);
   void ISPCProfileComplete();
-  void ISPCProfileStart(const char *note, int region_type, int start_line, 
+  void ISPCProfileStart(const char *filename, int region_type, int start_line, 
       int end_line, int task, uint64_t mask);
   void ISPCProfileEnd(int end_line);
   void ISPCProfileIteration(const char *note, int line, int64_t mask);
@@ -86,7 +86,7 @@ void ISPCProfileComplete() {
   delete ctx;
 }
 
-void ISPCProfileStart(const char *note, int region_type, int start_line, 
+void ISPCProfileStart(const char *filename, int region_type, int start_line, 
     int end_line, int task, uint64_t mask) { 
   
   // Using task id assigned to context to identify a region's task instead.
@@ -95,7 +95,7 @@ void ISPCProfileStart(const char *note, int region_type, int start_line,
   // Get Intel performance monitor state
   SystemCounterState state = getSystemCounterState();
 
-  ProfileRegion *region = new ProfileRegion(note, region_type, start_line, 
+  ProfileRegion *region = new ProfileRegion(filename, region_type, start_line, 
       end_line, mask, state);
 
   ProfileContext *ctx = getContext(false);

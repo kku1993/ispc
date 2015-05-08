@@ -1671,9 +1671,11 @@ FunctionEmitContext::AddProfileStart(const char *note, int region_type) {
     if (!g->emitProfile)
         return;
 
+    // Ignoring the provided note as we can identify the region by region_type.
+
     std::vector<llvm::Value *> args;
-    // arg 1: provided note
-    args.push_back(lGetStringAsValue(bblock, note));
+    // arg 1: file name
+    args.push_back(lGetStringAsValue(bblock, currentPos.name));
     // arg 2: region type
     args.push_back(LLVMInt32(region_type));
     // arg 3: start line number

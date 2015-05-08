@@ -152,7 +152,7 @@ static void EmitProfileHeader(FILE *f) {
     fprintf(f, "extern \"C\" {\n");
     fprintf(f, "  void ISPCProfileInit(const char *fn, int line, int num_lanes, int verbose); \n");
     fprintf(f, "  void ISPCProfileComplete(); \n");
-    fprintf(f, "  void ISPCProfileStart(const char *note, int region_type, int line, int type, int task, uint64_t mask); \n");
+    fprintf(f, "  void ISPCProfileStart(const char *filename, int region_type, int line, int type, int task, uint64_t mask); \n");
     fprintf(f, "  void ISPCProfileIteration(const char *note, int line, uint64_t mask); \n");
     fprintf(f, "  void ISPCProfileIf(const char *note, int line, uint64_t mask); \n");
     fprintf(f, "  void ISPCProfileEnd(int end_line); \n");

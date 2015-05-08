@@ -33,7 +33,7 @@ class ProfileRegion{
     // Unique id of the region.
     rid_t id;
 
-    const char *region_note;
+    const char *file_name;
     int region_type;
     int start_line;
     int end_line;

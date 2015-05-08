@@ -32,9 +32,9 @@ static int lanesUsed(int total_num_lanes, uint64_t mask) {
 ////////////////////////////////////////////
 // ProfileRegion
 ////////////////////////////////////////////
-ProfileRegion::ProfileRegion(const char *note, int region_type, int start_line,
+ProfileRegion::ProfileRegion(const char *fn, int region_type, int start_line,
     int end_line, uint64_t mask, SystemCounterState state) {
-  this->region_note = note;
+  this->file_name = fn;
   this->region_type = region_type;
   this->start_line = start_line;
   this->end_line = end_line;
@@ -116,6 +116,7 @@ std::string ProfileRegion::outputJSON() {
     "{"
       "\"region_id\":0,"
       "\"region_type\":0,"
+      "\"file_name\":\"\","
       "\"start_line\":0,"
       "\"end_line\":0,"
       "\"initial_mask\":0,"
@@ -132,6 +133,7 @@ std::string ProfileRegion::outputJSON() {
 
   d["region_id"].SetUint64(this->id);
   d["region_type"].SetInt(this->region_type);
+  d["file_name"].SetString(StringRef(this->file_name));
   d["start_line"].SetInt(this->start_line);
   d["end_line"].SetInt(this->end_line);
   d["initial_mask"].SetUint64(this->initial_mask);
