@@ -169,6 +169,12 @@
 #include <algorithm>
 
 #include "profile_flags.h"
+#include "profile_ctx.h"
+
+extern "C" {
+    // From profile.cpp to get current profile context when creating new task.
+    ProfileContext *getContext(bool pop);
+}
 
 // Signature of ispc-generated 'task' functions
 typedef void (*TaskFuncType)(void *data, int threadIndex, int threadCount,
@@ -632,6 +638,7 @@ typedef struct {
   const char *filename;
   int line;
   int num_lanes;
+  int profile_flags;
 } thread_arg_t;
 
 static int nThreads;
@@ -708,9 +715,8 @@ lTaskEntry(void *a) {
         // And now actually run the task
         //
 
-        // TODO Pass in the user specified flag
         ISPCProfileInit(arg->filename, arg->line, arg->num_lanes, 
-            ISPC_PROFILE_ALL);
+            arg->profile_flags);
 
         DBG(fprintf(stderr, "running task %d from group %p\n", taskNumber, tg));
         TaskInfo *myTask = tg->GetTaskInfo(taskNumber);
@@ -735,7 +741,7 @@ lTaskEntry(void *a) {
 
 
 static void
-InitTaskSystem(const char *filename, int line, int num_lanes) {
+InitTaskSystem(const char *filename, int line, int num_lanes, int flags) {
     if (threads == NULL) {
         while (1) {
             if (lAtomicCompareAndSwap32(&lock, 1, 0) == 0) {
@@ -776,6 +782,7 @@ InitTaskSystem(const char *filename, int line, int num_lanes) {
                       thread_args[i].filename = filename;
                       thread_args[i].line = line;
                       thread_args[i].num_lanes = num_lanes;
+                      thread_args[i].profile_flags = flags;
                       err = pthread_create(&threads[i], NULL, &lTaskEntry, (void *)(&thread_args[i]));
                         if (err != 0) {
                             fprintf(stderr, "Error creating pthread %d: %s\n", i, strerror(err));
@@ -1124,7 +1131,11 @@ ISPCLaunch(void **taskGroupPtr, void *func, void *data, int count0, int count1, 
     const int count = count0*count1*count2;
     TaskGroup *taskGroup;
     if (*taskGroupPtr == NULL) {
-        InitTaskSystem(filename, line, num_lanes);
+        // Get current profile flags
+        ProfileContext *ctx = getContext(false);
+        int flags = ctx == NULL ? ISPC_PROFILE_ALL_NO_PCM : ctx->getFlags();
+
+        InitTaskSystem(filename, line, num_lanes, flags);
         taskGroup = AllocTaskGroup();
         *taskGroupPtr = taskGroup;
     }
@@ -1159,7 +1170,11 @@ void *
 ISPCAlloc(void **taskGroupPtr, int64_t size, int32_t alignment, const char *filename, int line, int num_lanes) {
     TaskGroup *taskGroup;
     if (*taskGroupPtr == NULL) {
-        InitTaskSystem(filename, line, num_lanes);
+        // Get current profile flags
+        ProfileContext *ctx = getContext(false);
+        int flags = ctx == NULL ? ISPC_PROFILE_ALL_NO_PCM : ctx->getFlags();
+
+        InitTaskSystem(filename, line, num_lanes, flags);
         taskGroup = AllocTaskGroup();
         *taskGroupPtr = taskGroup;
     }

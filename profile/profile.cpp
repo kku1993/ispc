@@ -19,6 +19,8 @@ extern "C" {
       int region_type);
   void ISPCProfileIf(const char *note, int line, int64_t mask, 
       int region_type);
+
+  ProfileContext *getContext(bool pop);
 }
 
 // Map thread id to the current profile region in scope.
@@ -42,7 +44,7 @@ static void mask_to_str(uint64_t mask, char *buffer) {
 }
 */
 
-static ProfileContext *getContext(bool pop) {
+ProfileContext *getContext(bool pop) {
   pthread_t thread = pthread_self();
 
   pthread_mutex_lock(&ctx_map_lock);
@@ -173,7 +175,7 @@ void ISPCProfileIteration(const char *note, int line, int64_t mask,
   ProfileContext *ctx = getContext(false);
 
   if (ctx == NULL) {
-    fprintf(stderr, "Error: Profile iteration without context.\n");
+    //fprintf(stderr, "Error: Profile iteration without context.\n");
     return;
   }
 
@@ -190,7 +192,7 @@ void ISPCProfileIf(const char *note, int line, int64_t mask, int region_type) {
   ProfileContext *ctx = getContext(false);
 
   if (ctx == NULL) {
-    fprintf(stderr, "Error: Profile if statement without context.\n");
+    //fprintf(stderr, "Error: Profile if statement without context.\n");
     return;
   }
 
