@@ -12,11 +12,10 @@
 
 TODO
 ====
+- Add handler to clean up PCM on exit.
 - Allow calls to ProfileInit from within ISPC.
-- Test compability with pthreads and processes.
-- Allow user to decide what kinds of regions to log.
 - User program must be compiled with `-lpthread`
-- Get extensive list of ispc library files.
+- Get extensive list of ispc library files and exclude them from the profiler.
 
 Profile Context vs Region
 =========================
