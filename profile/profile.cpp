@@ -48,6 +48,10 @@ static ProfileContext *getContext(bool pop) {
   if (pop)
     ctx_map.erase(thread);
 
+  // Clean up PCM 
+  if (ctx_map.size() == 0)
+    monitor->cleanup();
+
   pthread_mutex_unlock(&ctx_map_lock);
 
   return ctx;
@@ -64,12 +68,11 @@ void ISPCProfileInit(const char *file, int line, int total_lanes, int verbose) {
   // Initialize Intel performance monitor 
   if (ctx_map.size() == 0) {
     monitor = PCM::getInstance();
-    monitor->program(PCM::DEFAULT_EVENTS, NULL);
 
     PCM::ErrorCode err = monitor->program();
     if (err != PCM::Success) {
-      // TODO report pcm failed
-      // fprintf(stderr, "PCM init failed [error = %d].\n", err);
+      fprintf(stderr, "PCM init failed [error = %d].\n", err);
+      exit(1);
     }
   }
 

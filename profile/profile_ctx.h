@@ -27,9 +27,6 @@ class ProfileRegion{
     // Intel PCM state upon entry to this region.
     SystemCounterState entry_sstate;
 
-    // Intel PCM state upon leaving this region.
-    SystemCounterState exit_sstate;
-
     // Unique id of the region.
     rid_t id;
 
@@ -50,18 +47,28 @@ class ProfileRegion{
     // was run with full mask)
     LaneUsageMap fullMaskMap;
 
+    // Number of times we've entered this region. Need to record this since we
+    // are re-using the same ProfileRegion object.
+    int num_entry;
+
+    // Avg PCM stats across entries into this region.
+    double avg_ipc;
+    double avg_l2_hit;
+    double avg_l3_hit;
+    double avg_bytes_read;
+
   public:
-    ProfileRegion(const char*, int, int, int, uint64_t, SystemCounterState *);
+    ProfileRegion(const char*, int, int, int, uint64_t);
     ~ProfileRegion();
     void setId(rid_t);
-    void updateExitStatus(SystemCounterState *exit_state);
-    void updateEndLine(int);
+    void enterRegion(SystemCounterState *enter_state);
+    void exitRegion(SystemCounterState *exit_state, int end_line);
     int getStartLine();
     int getRegionType();
-    double getRegionIPC();
-    double getRegionL3HitRatio();
-    double getRegionL2HitRatio();
-    uint64_t getRegionBytesRead();
+    double getRegionIPC(SystemCounterState);
+    double getRegionL3HitRatio(SystemCounterState);
+    double getRegionL2HitRatio(SystemCounterState);
+    uint64_t getRegionBytesRead(SystemCounterState);
     void updateLineMask(int line, uint64_t mask, int total_num_lanes);
     std::string outputJSON();
 };

@@ -33,15 +33,18 @@ static int lanesUsed(int total_num_lanes, uint64_t mask) {
 // ProfileRegion
 ////////////////////////////////////////////
 ProfileRegion::ProfileRegion(const char *fn, int region_type, int start_line,
-    int end_line, uint64_t mask, SystemCounterState *state) {
+    int end_line, uint64_t mask) {
   this->file_name = fn;
   this->region_type = region_type;
   this->start_line = start_line;
   this->end_line = end_line;
   this->initial_mask = mask;
 
-  if (state != NULL)
-    memcpy(&this->entry_sstate, state, sizeof (SystemCounterState));
+  this->num_entry = 0;
+  this->avg_ipc = 0;
+  this->avg_l2_hit = 0;
+  this->avg_l3_hit = 0;
+  this->avg_bytes_read = 0;
 }
 
 ProfileRegion::~ProfileRegion() {
@@ -52,15 +55,33 @@ void ProfileRegion::setId(rid_t id) {
   this->id = id;
 }
 
-void ProfileRegion::updateExitStatus(SystemCounterState *state) {
+void ProfileRegion::enterRegion(SystemCounterState *state) {
   if (state != NULL)
-    memcpy(&this->exit_sstate, state, sizeof (SystemCounterState));
+    memcpy(&this->entry_sstate, state, sizeof (SystemCounterState));
+
+  this->num_entry += 1;
 }
 
-void ProfileRegion::updateEndLine(int end_line) {
+void ProfileRegion::exitRegion(SystemCounterState *state, int end_line) {
   // Both end line provided to the constructor and the end line obtained from 
   // ProfileEnd are not reliable, so we get the best estimate of the 2.
   this->end_line = MAX(end_line, this->end_line);
+
+  // Update PCM stats.
+  if (state != NULL) {
+    double ipc = this->avg_ipc * (this->num_entry - 1) + getRegionIPC(*state);
+    double l2 = this->avg_l2_hit * (this->num_entry - 1)
+        + getRegionL2HitRatio(*state);
+    double l3 = this->avg_l3_hit * (this->num_entry - 1)
+        + getRegionL3HitRatio(*state);
+    double bytes_read = this->avg_bytes_read * (this->num_entry - 1)
+        + getRegionBytesRead(*state);
+
+    this->avg_ipc = ipc / this->num_entry;
+    this->avg_l2_hit = l2 / this->num_entry;
+    this->avg_l3_hit = l3 / this->num_entry;
+    this->avg_bytes_read = bytes_read / this->num_entry;
+  }
 }
 
 int ProfileRegion::getStartLine() {
@@ -71,20 +92,20 @@ int ProfileRegion::getRegionType() {
   return this->region_type;
 }
 
-double ProfileRegion::getRegionIPC() {
-  return getIPC(this->entry_sstate, this->exit_sstate);
+double ProfileRegion::getRegionIPC(SystemCounterState exit_state) {
+  return getIPC(this->entry_sstate, exit_state);
 }
 
-double ProfileRegion::getRegionL3HitRatio() {
-  return getL3CacheHitRatio(this->entry_sstate, this->exit_sstate);
+double ProfileRegion::getRegionL3HitRatio(SystemCounterState exit_state) {
+  return getL3CacheHitRatio(this->entry_sstate, exit_state);
 }
 
-double ProfileRegion::getRegionL2HitRatio() {
-  return getL2CacheHitRatio(this->entry_sstate, this->exit_sstate);
+double ProfileRegion::getRegionL2HitRatio(SystemCounterState exit_state) {
+  return getL2CacheHitRatio(this->entry_sstate, exit_state);
 }
 
-uint64_t ProfileRegion::getRegionBytesRead() {
-  return getBytesReadFromMC(this->entry_sstate, this->exit_sstate);
+uint64_t ProfileRegion::getRegionBytesRead(SystemCounterState exit_state) {
+  return getBytesReadFromMC(this->entry_sstate, exit_state);
 }
 
 static void insertUsageMap(LaneUsageMap &m, int line, int dtotal, int dval) {
@@ -148,10 +169,10 @@ std::string ProfileRegion::outputJSON() {
   d["start_line"].SetInt(this->start_line);
   d["end_line"].SetInt(this->end_line);
   d["initial_mask"].SetUint64(this->initial_mask);
-  d["ipc"].SetDouble(getRegionIPC());
-  d["l2_hit"].SetDouble(getRegionL2HitRatio());
-  d["l3_hit"].SetDouble(getRegionL3HitRatio());
-  d["bytes_read"].SetDouble(getRegionBytesRead());
+  d["ipc"].SetDouble(this->avg_ipc);
+  d["l2_hit"].SetDouble(this->avg_l2_hit);
+  d["l3_hit"].SetDouble(this->avg_l3_hit);
+  d["bytes_read"].SetDouble(this->avg_bytes_read);
 
   // Add list of lane usage by line number.
   Value &lane_usage = d["lane_usage"];
@@ -280,11 +301,12 @@ void ProfileContext::pushRegion(const char *filename, int region_type,
   if (it != this->old_regions.end()) {
     r = it->second;
   } else {
-    r = new ProfileRegion(filename, region_type, start_line, end_line, mask, 
-        state);
+    r = new ProfileRegion(filename, region_type, start_line, end_line, mask);
     rid_t id = this->region_id_counter++;
     r->setId(id);
   }
+
+  r->enterRegion(state);
 
   this->regions.push(r);
 }
@@ -298,8 +320,7 @@ void ProfileContext::popRegion(SystemCounterState *exit_state, int end_line) {
   ProfileRegion *r = this->regions.top();
   this->regions.pop();
 
-  r->updateExitStatus(exit_state);
-  r->updateEndLine(end_line);
+  r->exitRegion(exit_state, end_line);
 
   int start_line = r->getStartLine();
   int region_type = r->getRegionType();
