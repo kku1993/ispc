@@ -1,0 +1,9 @@
+
+EXAMPLE=ao
+CPP_SRC=ao.cpp ao_serial.cpp
+ISPC_SRC=ao.ispc
+ISPC_FLAGS=--profile
+ISPC_IA_TARGETS=sse2-i32x4,sse4-i32x4,avx1-i32x8,avx2-i32x8
+ISPC_ARM_TARGETS=neon
+
+include ../common_no_task.mk
