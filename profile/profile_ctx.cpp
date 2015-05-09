@@ -278,7 +278,7 @@ void ProfileContext::outputProfile() {
   fprintf(fp, "\"regions\": [\n");
   for (RegionMap::iterator it = this->old_regions.begin(); 
       it != this->old_regions.end(); ++it) {
-    char comma = this->old_regions.end() == it ? ' ' : ',';
+    char comma = this->old_regions.end() == next(it) ? ' ' : ',';
     ProfileRegion *r = it->second;
     fprintf(fp, "%s%c\n", r->outputJSON().c_str(), comma);
   }
