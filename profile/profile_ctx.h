@@ -56,6 +56,8 @@ class ProfileRegion{
     void setId(rid_t);
     void updateExitStatus(SystemCounterState *exit_state);
     void updateEndLine(int);
+    int getStartLine();
+    int getRegionType();
     double getRegionIPC();
     double getRegionL3HitRatio();
     double getRegionL2HitRatio();
@@ -63,6 +65,9 @@ class ProfileRegion{
     void updateLineMask(int line, uint64_t mask, int total_num_lanes);
     std::string outputJSON();
 };
+
+// Map <start line, region type> to region object.
+typedef std::map<std::pair<int, int>, ProfileRegion *> RegionMap;
 
 class ProfileContext{
   private:
@@ -88,14 +93,15 @@ class ProfileContext{
     int total_num_lanes;
 
     // List to keep old regions that have left their scopes.
-    std::list<ProfileRegion *> old_regions;
+    RegionMap old_regions;
 
   public:
     ProfileContext(const char* name, int line, int num_lanes, int verbose, 
         int task_id);
     ~ProfileContext();
     void outputProfile();
-    void pushRegion(ProfileRegion *);
+    void pushRegion(const char *filename, int region_type, 
+      int start_line, int end_line, uint64_t mask, SystemCounterState *state);
     void popRegion(SystemCounterState *exit_state, int end_line);
     void updateCurrentRegion(const char *note, int line, uint64_t mask);
 };

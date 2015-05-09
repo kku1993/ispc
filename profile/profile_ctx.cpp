@@ -63,6 +63,14 @@ void ProfileRegion::updateEndLine(int end_line) {
   this->end_line = MAX(end_line, this->end_line);
 }
 
+int ProfileRegion::getStartLine() {
+  return this->start_line;
+}
+
+int ProfileRegion::getRegionType() {
+  return this->region_type;
+}
+
 double ProfileRegion::getRegionIPC() {
   return getIPC(this->entry_sstate, this->exit_sstate);
 }
@@ -248,26 +256,36 @@ void ProfileContext::outputProfile() {
 
   // Output json for each region.
   fprintf(fp, "\"regions\": [\n");
-  while (!this->old_regions.empty()) {
-    char comma = this->old_regions.size() == 1 ? ' ' : ',';
-    ProfileRegion *r = this->old_regions.front();
+  for (RegionMap::iterator it = this->old_regions.begin(); 
+      it != this->old_regions.end(); ++it) {
+    char comma = this->old_regions.end() == it ? ' ' : ',';
+    ProfileRegion *r = it->second;
     fprintf(fp, "%s%c\n", r->outputJSON().c_str(), comma);
-    this->old_regions.pop_front();
   }
   fprintf(fp, "]");
-
   fprintf(fp, "}");
 
   this->old_regions.clear();
 }
 
 // Adds a new profile region, which becomes the most recent profile region.
-void ProfileContext::pushRegion(ProfileRegion *r) {
-  if (r == NULL)
-    return;
+void ProfileContext::pushRegion(const char *filename, int region_type, 
+    int start_line, int end_line, uint64_t mask, SystemCounterState *state) {
 
-  rid_t id = this->region_id_counter++;
-  r->setId(id);
+  ProfileRegion *r;
+
+  // Recyle old region.
+  RegionMap::iterator it = this->old_regions.find(
+      std::make_pair(start_line, region_type));
+  if (it != this->old_regions.end()) {
+    r = it->second;
+  } else {
+    r = new ProfileRegion(filename, region_type, start_line, end_line, mask, 
+        state);
+    rid_t id = this->region_id_counter++;
+    r->setId(id);
+  }
+
   this->regions.push(r);
 }
 
@@ -283,7 +301,9 @@ void ProfileContext::popRegion(SystemCounterState *exit_state, int end_line) {
   r->updateExitStatus(exit_state);
   r->updateEndLine(end_line);
 
-  this->old_regions.push_back(r); 
+  int start_line = r->getStartLine();
+  int region_type = r->getRegionType();
+  this->old_regions[std::make_pair(start_line, region_type)] = r;
 }
 
 // Update the most recent profile region.

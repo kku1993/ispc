@@ -562,9 +562,11 @@ FunctionEmitContext::EndIf() {
     // Make sure we match up with a Start{Uniform,Varying}If().
     AssertPos(currentPos, ci->IsIf());
 
+    bool is_uniform = ci->IsUniform();
+
     // 'uniform' ifs don't change the mask so we only need to restore the
     // mask going into the if for 'varying' if statements
-    if (ci->IsUniform() || bblock == NULL)
+    if (is_uniform || bblock == NULL)
         return;
 
     // We can't just restore the mask as it was going into the 'if'
@@ -617,8 +619,10 @@ FunctionEmitContext::EndIf() {
         SetInternalMask(newMask);
     }
 
-    if (g->emitProfile) 
-        AddProfileEnd();
+    if (g->emitProfile) {
+        AddProfileEnd(is_uniform ? PROFILE_REGION_IF_UNIFORM : 
+            PROFILE_REGION_IF_VARYING);
+    }
 }
 
 
@@ -668,7 +672,7 @@ FunctionEmitContext::EndLoop() {
         restoreMaskGivenReturns(ci->savedMask);
 
     if (g->emitProfile) 
-        AddProfileEnd();
+        AddProfileEnd(PROFILE_REGION_LOOP);
 }
 
 
@@ -714,7 +718,7 @@ FunctionEmitContext::EndForeach() {
     CFInfo *ci = popCFState();
     AssertPos(currentPos, ci->IsForeach());
     if (g->emitProfile) 
-        AddProfileEnd();
+        AddProfileEnd(PROFILE_REGION_FOREACH);
 }
 
 
@@ -1023,7 +1027,7 @@ FunctionEmitContext::EndSwitch() {
         restoreMaskGivenReturns(ci->savedMask);
 
     if (g->emitProfile) 
-        AddProfileEnd();
+        AddProfileEnd(PROFILE_REGION_SWITCH);
 }
 
 
@@ -1731,12 +1735,14 @@ FunctionEmitContext::AddProfileIf(const char *note) {
 
 
 void
-FunctionEmitContext::AddProfileEnd() {
+FunctionEmitContext::AddProfileEnd(int region_type) {
     if (!g->emitProfile)
         return;
 
     std::vector<llvm::Value *> args;
-    // arg 1: line number
+    // arg 1: region type
+    args.push_back(LLVMInt32(region_type));
+    // arg 2: line number
     args.push_back(LLVMInt32(currentPos.last_line));
 
     llvm::Function *finst = m->module->getFunction("ISPCProfileEnd");
@@ -3846,7 +3852,7 @@ FunctionEmitContext::CallInst(llvm::Value *func, const FunctionType *funcType,
 
 llvm::Instruction *
 FunctionEmitContext::ReturnInst() {
-    AddProfileEnd();
+    AddProfileEnd(PROFILE_REGION_FUNCTION);
 
     if (launchedTasks)
         // Add a sync call at the end of any function that launched tasks

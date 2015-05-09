@@ -2330,7 +2330,7 @@ declare void @ISPCProfileComplete() nounwind
 declare void @ISPCProfileStart(i8*, i32, i32, i32, i32, i64) nounwind
 declare void @ISPCProfileIteration(i8*, i32, i64) nounwind
 declare void @ISPCProfileIf(i8*, i32, i64) nounwind
-declare void @ISPCProfileEnd(i32) nounwind
+declare void @ISPCProfileEnd(i32, i32) nounwind
 
 declare i1 @__is_compile_time_constant_mask(<WIDTH x MASK> %mask)
 declare i1 @__is_compile_time_constant_uniform_int32(i32)

@@ -86,4 +86,18 @@ export void foo(uniform double arr[], uniform int len) {
   foreach (i = 1 ... 5) {
     b = 0;
   }
+
+  // Test big for loop
+  for (uniform int idx = 0; c < 100; c++) {
+    int xsum = 0;
+    int ysum = 0;
+    int zsum = 0;
+    for (uniform int i = 0; i < 64 * 1024; i += 8) {
+      for (uniform int j = 0; j < 8; j += programCount) {
+        xsum += j + programIndex;
+        ysum += 8 + j + programIndex;
+        zsum += 16 + j + programIndex;
+      }
+    } 
+  }
 }

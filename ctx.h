@@ -338,7 +338,7 @@ public:
     void AddProfileStart(const char *note, int region_type);
     void AddProfileIteration(const char *note);
     void AddProfileIf(const char *note);
-    void AddProfileEnd();
+    void AddProfileEnd(int region_type);
     /** @} */
 
     /** @name Debugging support

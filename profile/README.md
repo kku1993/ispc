@@ -16,6 +16,7 @@ TODO
 - Test compability with pthreads and processes.
 - Allow user to decide what kinds of regions to log.
 - User program must be compiled with `-lpthread`
+- Get extensive list of ispc library files.
 
 Profile Context vs Region
 =========================
