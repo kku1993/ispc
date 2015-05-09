@@ -51,10 +51,10 @@ class ProfileRegion{
     LaneUsageMap fullMaskMap;
 
   public:
-    ProfileRegion(const char*, int, int, int, uint64_t, SystemCounterState);
+    ProfileRegion(const char*, int, int, int, uint64_t, SystemCounterState *);
     ~ProfileRegion();
     void setId(rid_t);
-    void updateExitStatus(SystemCounterState);
+    void updateExitStatus(SystemCounterState *exit_state);
     void updateEndLine(int);
     double getRegionIPC();
     double getRegionL3HitRatio();
@@ -96,7 +96,7 @@ class ProfileContext{
     ~ProfileContext();
     void outputProfile();
     void pushRegion(ProfileRegion *);
-    void popRegion(SystemCounterState exit_state, int end_line);
+    void popRegion(SystemCounterState *exit_state, int end_line);
     void updateCurrentRegion(const char *note, int line, uint64_t mask);
 };
 

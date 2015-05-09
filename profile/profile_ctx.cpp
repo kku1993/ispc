@@ -33,13 +33,15 @@ static int lanesUsed(int total_num_lanes, uint64_t mask) {
 // ProfileRegion
 ////////////////////////////////////////////
 ProfileRegion::ProfileRegion(const char *fn, int region_type, int start_line,
-    int end_line, uint64_t mask, SystemCounterState state) {
+    int end_line, uint64_t mask, SystemCounterState *state) {
   this->file_name = fn;
   this->region_type = region_type;
   this->start_line = start_line;
   this->end_line = end_line;
   this->initial_mask = mask;
-  this->entry_sstate = state;
+
+  if (state != NULL)
+    memcpy(&this->entry_sstate, state, sizeof (SystemCounterState));
 }
 
 ProfileRegion::~ProfileRegion() {
@@ -50,8 +52,9 @@ void ProfileRegion::setId(rid_t id) {
   this->id = id;
 }
 
-void ProfileRegion::updateExitStatus(SystemCounterState state) {
-  this->exit_sstate = state;
+void ProfileRegion::updateExitStatus(SystemCounterState *state) {
+  if (state != NULL)
+    memcpy(&this->exit_sstate, state, sizeof (SystemCounterState));
 }
 
 void ProfileRegion::updateEndLine(int end_line) {
@@ -270,7 +273,7 @@ void ProfileContext::pushRegion(ProfileRegion *r) {
 
 // Removes the most recent profile region.
 // Return the JSON for the region.
-void ProfileContext::popRegion(SystemCounterState exit_state, int end_line) {
+void ProfileContext::popRegion(SystemCounterState *exit_state, int end_line) {
   if (this->regions.empty())
     return;
 

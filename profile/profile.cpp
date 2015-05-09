@@ -53,6 +53,9 @@ static ProfileContext *getContext(bool pop) {
 }
 
 void ISPCProfileInit(const char *file, int line, int total_lanes, int verbose) {
+  if (strcmp(file, "stdlib.ispc") == 0)
+    return;
+
   pthread_t thread = pthread_self();
 
   pthread_mutex_lock(&ctx_map_lock);
@@ -65,7 +68,7 @@ void ISPCProfileInit(const char *file, int line, int total_lanes, int verbose) {
     PCM::ErrorCode err = monitor->program();
     if (err != PCM::Success) {
       // TODO report pcm failed
-      printf("PCM init failed [error = %d].\n", err);
+      // fprintf(stderr, "PCM init failed [error = %d].\n", err);
     }
   }
 
@@ -82,47 +85,73 @@ void ISPCProfileInit(const char *file, int line, int total_lanes, int verbose) {
 
 void ISPCProfileComplete() {
   ProfileContext *ctx = getContext(true);
+
+  if (ctx == NULL) {
+    //fprintf(stderr, "Error: Profile complete without context.\n");
+    return;
+  }
+
   ctx->outputProfile();
   delete ctx;
 }
 
 void ISPCProfileStart(const char *filename, int region_type, int start_line, 
     int end_line, int task, uint64_t mask) { 
+
+  if (strcmp(filename, "stdlib.ispc") == 0)
+    return;
   
   // Using task id assigned to context to identify a region's task instead.
   (void) task;
+
+  ProfileContext *ctx = getContext(false);
+
+  if (ctx == NULL) {
+    //fprintf(stderr, "Error: Profile region started without context.\n");
+    return;
+  }
 
   // Get Intel performance monitor state
   SystemCounterState state = getSystemCounterState();
 
   ProfileRegion *region = new ProfileRegion(filename, region_type, start_line, 
-      end_line, mask, state);
-
-  ProfileContext *ctx = getContext(false);
-
-  if (ctx == NULL) {
-    fprintf(stderr, "Error: Profile region started without context.\n");
-    exit(1);
-  }
+      end_line, mask, &state);
 
   ctx->pushRegion(region);
 }
 
 void ISPCProfileEnd(int end_line) {
-  SystemCounterState after_sstate = getSystemCounterState();
-
   ProfileContext *ctx = getContext(false);
 
+  if (ctx == NULL) {
+    //fprintf(stderr, "Error: Profile region ended without context.\n");
+    return;
+  }
+
+  SystemCounterState after_sstate = getSystemCounterState();
+
   // Remove the profile region from the profiling context.
-  ctx->popRegion(after_sstate, end_line);
+  ctx->popRegion(&after_sstate, end_line);
 }
 
 void ISPCProfileIteration(const char *note, int line, int64_t mask) {
   ProfileContext *ctx = getContext(false);
+
+  if (ctx == NULL) {
+    fprintf(stderr, "Error: Profile iteration without context.\n");
+    return;
+  }
+
   ctx->updateCurrentRegion(note, line, mask);
 }
 
 void ISPCProfileIf(const char *note, int line, int64_t mask) {
   ProfileContext *ctx = getContext(false);
+
+  if (ctx == NULL) {
+    fprintf(stderr, "Error: Profile if statement without context.\n");
+    return;
+  }
+
   ctx->updateCurrentRegion(note, line, mask);
 }
