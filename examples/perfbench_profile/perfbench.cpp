@@ -84,7 +84,7 @@ int main() {
         lInitData(a, count);
         reset_and_start_timer();
         float resultA[3] = { 0, 0, 0 };
-        ISPC_PROFILE_BEGIN
+        ISPC_PROFILE_BEGIN(ISPC_PROFILE_ALL_NO_PCM)
         for (int j = 0; j < 100; ++j)
             tests[i].aFunc(a, count, zeros, resultA);
         ISPC_PROFILE_END
@@ -93,7 +93,7 @@ int main() {
         lInitData(a, count);
         reset_and_start_timer();
         float resultB[3] = { 0, 0, 0 };
-        ISPC_PROFILE_BEGIN
+        ISPC_PROFILE_BEGIN(ISPC_PROFILE_ALL_NO_PCM)
         for (int j = 0; j < 100; ++j) {
             tests[i].bFunc(a, count, zeros, resultB);
         }
