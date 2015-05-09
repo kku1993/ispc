@@ -31,12 +31,12 @@ Profile Context vs Region
   - Minimum resolution of what the user can control to profile
   - Region types:
 ```
-  IF_UNIFORM 0
-  IF_VARYING 1
-  LOOP 2
-  FOREACH 3
-  SWITCH 4
-  FUNCTION 5
+  IF_UNIFORM 0x1
+  IF_VARYING 0x2
+  LOOP 0x4
+  FOREACH 0x8
+  SWITCH 0x10
+  FUNCTION 0x20
 ```
 
 Internal API

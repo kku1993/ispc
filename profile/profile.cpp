@@ -7,15 +7,18 @@
 #include "intel_pcm/cpucounters.h"
 #include "profile_ctx.h"
 #include "profile_region_types.h"
+#include "profile_flags.h"
 
 extern "C" {
-  void ISPCProfileInit(const char *fn, int line, int total_lanes, int verbose);
+  void ISPCProfileInit(const char *fn, int line, int total_lanes, int flags);
   void ISPCProfileComplete();
   void ISPCProfileStart(const char *filename, int region_type, int start_line, 
       int end_line, int task, uint64_t mask);
   void ISPCProfileEnd(int region_type, int end_line);
-  void ISPCProfileIteration(const char *note, int line, int64_t mask);
-  void ISPCProfileIf(const char *note, int line, int64_t mask);
+  void ISPCProfileIteration(const char *note, int line, int64_t mask, 
+      int region_type);
+  void ISPCProfileIf(const char *note, int line, int64_t mask, 
+      int region_type);
 }
 
 // Map thread id to the current profile region in scope.
@@ -57,7 +60,7 @@ static ProfileContext *getContext(bool pop) {
   return ctx;
 }
 
-void ISPCProfileInit(const char *file, int line, int total_lanes, int verbose) {
+void ISPCProfileInit(const char *file, int line, int total_lanes, int flags) {
   if (strcmp(file, "stdlib.ispc") == 0)
     return;
 
@@ -79,7 +82,7 @@ void ISPCProfileInit(const char *file, int line, int total_lanes, int verbose) {
   ProfileContextMap::iterator it = ctx_map.find(thread);
   if (it == ctx_map.end()) {
     // Create new context.
-    ProfileContext *ctx = new ProfileContext(file, line, total_lanes, verbose,
+    ProfileContext *ctx = new ProfileContext(file, line, total_lanes, flags,
       task_id_counter++);
     ctx_map[thread] = ctx;
   } 
@@ -116,10 +119,23 @@ void ISPCProfileStart(const char *filename, int region_type, int start_line,
     return;
   }
 
-  // Get Intel performance monitor state
-  SystemCounterState state = getSystemCounterState();
+  // Skip this type of region if the user doesn't want to profile it.
+  int flags = ctx->getFlags();
+  if ((flags & region_type) == 0) {
+    return;
+  }
 
-  ctx->pushRegion(filename, region_type, start_line, end_line, mask, &state);
+  // Get Intel performance monitor state if the user requested it.
+  SystemCounterState *state;
+  SystemCounterState s;
+  if ((flags & ISPC_PROFILE_PCM) == 0) {
+    state = NULL;
+  } else {
+    s = getSystemCounterState();
+    state = &s;
+  }
+
+  ctx->pushRegion(filename, region_type, start_line, end_line, mask, state);
 }
 
 void ISPCProfileEnd(int region_type, int end_line) {
@@ -132,13 +148,28 @@ void ISPCProfileEnd(int region_type, int end_line) {
     return;
   }
 
-  SystemCounterState after_sstate = getSystemCounterState();
+  // Skip this type of region if the user doesn't want to profile it.
+  int flags = ctx->getFlags();
+  if ((flags & region_type) == 0) {
+    return;
+  }
+
+  // Get Intel performance monitor state if the user requested it.
+  SystemCounterState *state;
+  SystemCounterState s;
+  if ((flags & ISPC_PROFILE_PCM) == 0) {
+    state = NULL;
+  } else {
+    s = getSystemCounterState();
+    state = &s;
+  }
 
   // Remove the profile region from the profiling context.
-  ctx->popRegion(&after_sstate, end_line);
+  ctx->popRegion(state, end_line);
 }
 
-void ISPCProfileIteration(const char *note, int line, int64_t mask) {
+void ISPCProfileIteration(const char *note, int line, int64_t mask, 
+    int region_type) {
   ProfileContext *ctx = getContext(false);
 
   if (ctx == NULL) {
@@ -146,14 +177,26 @@ void ISPCProfileIteration(const char *note, int line, int64_t mask) {
     return;
   }
 
+  // Skip this type of region if the user doesn't want to profile it.
+  int flags = ctx->getFlags();
+  if ((flags & region_type) == 0) {
+    return;
+  }
+
   ctx->updateCurrentRegion(note, line, mask);
 }
 
-void ISPCProfileIf(const char *note, int line, int64_t mask) {
+void ISPCProfileIf(const char *note, int line, int64_t mask, int region_type) {
   ProfileContext *ctx = getContext(false);
 
   if (ctx == NULL) {
     fprintf(stderr, "Error: Profile if statement without context.\n");
+    return;
+  }
+
+  // Skip this type of region if the user doesn't want to profile it.
+  int flags = ctx->getFlags();
+  if ((flags & region_type) == 0) {
     return;
   }
 

@@ -44,6 +44,7 @@
 #include "sym.h"
 #include "module.h"
 #include "llvmutil.h"
+#include "profile/profile_region_types.h"
 
 #include <stdio.h>
 #include <map>
@@ -533,9 +534,7 @@ lEmitIfStatements(FunctionEmitContext *ctx, Stmt *stmts, const char *trueOrFalse
     if (dynamic_cast<StmtList *>(stmts) == NULL)
         ctx->StartScope();
     ctx->AddInstrumentationPoint(trueOrFalse);
-
-    ctx->AddProfileIf(trueOrFalse);
-
+ 
     stmts->EmitCode(ctx);
     if (dynamic_cast<const StmtList *>(stmts) == NULL) 
         ctx->EndScope();
@@ -580,6 +579,9 @@ IfStmt::EmitCode(FunctionEmitContext *ctx) const {
 
     ctx->SetDebugPos(pos);
     bool isUniform = testType->IsUniformType();
+
+    ctx->AddProfileIf("", isUniform ? PROFILE_REGION_IF_UNIFORM : 
+        PROFILE_REGION_IF_VARYING);
 
     llvm::Value *testValue = test->GetValue(ctx);
     if (testValue == NULL)
@@ -1055,7 +1057,7 @@ void DoStmt::EmitCode(FunctionEmitContext *ctx) const {
         ctx->StartScope();
 
     ctx->AddInstrumentationPoint("do loop body");
-    ctx->AddProfileIteration("do loop body"); 
+    ctx->AddProfileIteration("do loop body", PROFILE_REGION_LOOP); 
 
     if (doCoherentCheck && !uniformTest) {
         // Check to see if the mask is all on
@@ -1262,7 +1264,7 @@ ForStmt::EmitCode(FunctionEmitContext *ctx) const {
     ctx->SetCurrentBasicBlock(bloop);
     ctx->SetBlockEntryMask(ctx->GetFullMask());
     ctx->AddInstrumentationPoint("for loop body");
-    ctx->AddProfileIteration("for loop body");
+    ctx->AddProfileIteration("for loop body", PROFILE_REGION_LOOP);
     if (!dynamic_cast<StmtList *>(stmts))
         ctx->StartScope();
 
@@ -2027,7 +2029,8 @@ ForeachStmt::EmitCode(FunctionEmitContext *ctx) const {
                               dimVariables[nDims-1]->storagePtr, span);
         ctx->SetContinueTarget(bbFullBodyContinue);
         ctx->AddInstrumentationPoint("foreach loop body (all on)");
-        ctx->AddProfileIteration("foreach loop body (all on)");
+        ctx->AddProfileIteration("foreach loop body (all on)", 
+            PROFILE_REGION_FOREACH);
         stmts->EmitCode(ctx);
         AssertPos(pos, ctx->GetCurrentBasicBlock() != NULL);
         ctx->BranchInst(bbFullBodyContinue);
@@ -2088,7 +2091,8 @@ ForeachStmt::EmitCode(FunctionEmitContext *ctx) const {
         ctx->CreateBasicBlock("foreach_masked_continue");
     ctx->SetCurrentBasicBlock(bbMaskedBody); {
         ctx->AddInstrumentationPoint("foreach loop body (masked)");
-        ctx->AddProfileIteration("foreach loop body (masked)");
+        ctx->AddProfileIteration("foreach loop body (masked)", 
+            PROFILE_REGION_FOREACH);
         ctx->SetContinueTarget(bbMaskedBodyContinue);
         ctx->DisableGatherScatterWarnings();
         ctx->SetBlockEntryMask(ctx->GetFullMask());

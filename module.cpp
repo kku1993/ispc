@@ -60,6 +60,7 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <unistd.h>
 #ifdef ISPC_NVPTX_ENABLED
 #include <map>
 #endif /* ISPC_NVPTX_ENABLED */
@@ -151,17 +152,39 @@ static void EmitProfileHeader(FILE *f) {
 
     fprintf(f, "#define ISPC_PROFILE 1\n");
     fprintf(f, "extern \"C\" {\n");
-    fprintf(f, "  void ISPCProfileInit(const char *fn, int line, int num_lanes, int verbose); \n");
+    fprintf(f, "  void ISPCProfileInit(const char *fn, int line, int num_lanes, int flags); \n");
     fprintf(f, "  void ISPCProfileComplete(); \n");
     fprintf(f, "  void ISPCProfileStart(const char *filename, int region_type, int line, int type, int task, uint64_t mask); \n");
-    fprintf(f, "  void ISPCProfileIteration(const char *note, int line, uint64_t mask); \n");
-    fprintf(f, "  void ISPCProfileIf(const char *note, int line, uint64_t mask); \n");
+    fprintf(f, "  void ISPCProfileIteration(const char *note, int line, uint64_t mask, int region_type); \n");
+    fprintf(f, "  void ISPCProfileIf(const char *note, int line, uint64_t mask, int region_type); \n");
     fprintf(f, "  void ISPCProfileEnd(int end_line); \n");
     fprintf(f, "}\n");
 
     int num_lanes = g->target->getVectorWidth();
-    fprintf(f, "#define ISPC_PROFILE_BEGIN ISPCProfileInit(__FILE__, __LINE__, %d, %d); \n", num_lanes, ISPC_PROFILE_ALL);
+    fprintf(f, "#define ISPC_PROFILE_BEGIN(v) ISPCProfileInit(__FILE__, __LINE__, %d, (v)); \n", num_lanes);
     fprintf(f, "#define ISPC_PROFILE_END ISPCProfileComplete(); \n");
+
+    // Emit profiler flags
+    // TODO more robust way of getting the directory of the compiler
+    char pd[PATH_MAX], dir[PATH_MAX];
+    readlink("/proc/self/exe", dir, PATH_MAX);
+    int last_slash = 0;
+    for (int i = 0; i < PATH_MAX; i++) {
+      if (dir[i] == '\0')
+        break;
+      else if (dir[i] == '/')
+        last_slash = i;
+    }
+    memcpy(pd, dir, sizeof (char) * last_slash);
+    pd[last_slash] = '\0';
+
+    sprintf(dir, "%s/profile/profile_flags.h", pd);
+    std::ifstream infile(dir);
+    std::string line;
+    while (std::getline(infile, line)) {
+      std::istringstream iss(line);
+      fprintf(f, "%s\n", line.c_str());
+    }
 }
 
 static void

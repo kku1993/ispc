@@ -1697,7 +1697,7 @@ FunctionEmitContext::AddProfileStart(const char *note, int region_type) {
 
 
 void
-FunctionEmitContext::AddProfileIteration(const char *note) {
+FunctionEmitContext::AddProfileIteration(const char *note, int region_type) {
     AssertPos(currentPos, note != NULL);
     if (!g->emitProfile)
         return;
@@ -1709,6 +1709,8 @@ FunctionEmitContext::AddProfileIteration(const char *note) {
     args.push_back(LLVMInt32(currentPos.first_line));
     // arg 3: current mask, movmsk'ed down to an int64
     args.push_back(LaneMask(GetFullMask()));
+    // arg 4: region type
+    args.push_back(LLVMInt32(region_type));
 
     llvm::Function *finst = m->module->getFunction("ISPCProfileIteration");
     CallInst(finst, NULL, args, "");
@@ -1716,7 +1718,7 @@ FunctionEmitContext::AddProfileIteration(const char *note) {
 
 
 void
-FunctionEmitContext::AddProfileIf(const char *note) {
+FunctionEmitContext::AddProfileIf(const char *note, int region_type) {
     AssertPos(currentPos, note != NULL);
     if (!g->emitProfile)
         return;
@@ -1728,6 +1730,8 @@ FunctionEmitContext::AddProfileIf(const char *note) {
     args.push_back(LLVMInt32(currentPos.first_line));
     // arg 3: current mask, movmsk'ed down to an int64
     args.push_back(LaneMask(GetFullMask()));
+    // arg 4: region type
+    args.push_back(LLVMInt32(region_type));
 
     llvm::Function *finst = m->module->getFunction("ISPCProfileIf");
     CallInst(finst, NULL, args, "");

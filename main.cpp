@@ -652,7 +652,7 @@ int main(int Argc, char *Argv[]) {
           last_slash = i;
       }
       memcpy(pd, dir, sizeof (char) * last_slash);
-      dir[last_slash] = '\0';
+      pd[last_slash] = '\0';
 
       char cmd[PATH_MAX * 4];
       memset(cmd, 0, sizeof (char) * PATH_MAX * 4);

@@ -168,6 +168,8 @@
 #include <string.h>
 #include <algorithm>
 
+#include "profile_flags.h"
+
 // Signature of ispc-generated 'task' functions
 typedef void (*TaskFuncType)(void *data, int threadIndex, int threadCount,
                              int taskIndex, int taskCount,
@@ -706,8 +708,9 @@ lTaskEntry(void *a) {
         // And now actually run the task
         //
 
-        // TODO Pass in verbose flag
-        ISPCProfileInit(arg->filename, arg->line, arg->num_lanes, 0);
+        // TODO Pass in the user specified flag
+        ISPCProfileInit(arg->filename, arg->line, arg->num_lanes, 
+            ISPC_PROFILE_ALL);
 
         DBG(fprintf(stderr, "running task %d from group %p\n", taskNumber, tg));
         TaskInfo *myTask = tg->GetTaskInfo(taskNumber);

@@ -95,7 +95,8 @@ class ProfileContext{
 
     const char *profile_name;
     int profile_line;
-    int verbose;
+    // Flags indicating what to profile.
+    int flags;
     // Total number of available lanes.
     int total_num_lanes;
 
@@ -103,7 +104,7 @@ class ProfileContext{
     RegionMap old_regions;
 
   public:
-    ProfileContext(const char* name, int line, int num_lanes, int verbose, 
+    ProfileContext(const char* name, int line, int num_lanes, int flags, 
         int task_id);
     ~ProfileContext();
     void outputProfile();
@@ -111,6 +112,7 @@ class ProfileContext{
       int start_line, int end_line, uint64_t mask, SystemCounterState *state);
     void popRegion(SystemCounterState *exit_state, int end_line);
     void updateCurrentRegion(const char *note, int line, uint64_t mask);
+    int getFlags();
 };
 
 #endif /* _PROFILE_CTX_H_ */

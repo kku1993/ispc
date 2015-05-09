@@ -216,11 +216,9 @@ std::string ProfileRegion::outputJSON() {
 // ProfileContext
 ////////////////////////////////////////////
 ProfileContext::ProfileContext(const char* name, int line, int num_lanes, 
-    int verbose, int task_id) {
+    int flags, int task_id) {
   this->region_id_counter = 0;
-
-  (void) verbose;
-  this->verbose = verbose;
+  this->flags = flags;
   this->profile_name = name;
   this->profile_line = line;
   this->total_num_lanes = num_lanes;
@@ -271,9 +269,10 @@ void ProfileContext::outputProfile() {
       "\"file\":\"%s\","
       "\"line\":%d,"
       "\"total_num_lanes\":%d,"
-      "\"task\":%d,", 
+      "\"task\":%d," 
+      "\"flags\":%d,", 
       this->profile_name, this->profile_line, 
-      this->total_num_lanes, this->task_id);
+      this->total_num_lanes, this->task_id, this->flags);
 
   // Output json for each region.
   fprintf(fp, "\"regions\": [\n");
@@ -336,4 +335,9 @@ void ProfileContext::updateCurrentRegion(const char *note, int line,
 
   ProfileRegion *r = this->regions.top();
   r->updateLineMask(line, mask, this->total_num_lanes);
+}
+
+// Get the flags detailing what to profile.
+int ProfileContext::getFlags() {
+  return this->flags;
 }
