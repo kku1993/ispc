@@ -21,3 +21,4 @@ examples/*/test
 check_isa.exe
 profile/*.o
 profile/intel_pcm/*.o
+profile_results/*
