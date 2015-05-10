@@ -15,9 +15,7 @@ extern "C" {
   void ISPCProfileStart(const char *filename, int region_type, int start_line, 
       int end_line, int task, uint64_t mask);
   void ISPCProfileEnd(int region_type, int end_line);
-  void ISPCProfileIteration(const char *note, int line, int64_t mask, 
-      int region_type);
-  void ISPCProfileIf(const char *note, int line, int64_t mask, 
+  void ISPCProfileUpdate(const char *note, int line, int64_t mask, 
       int region_type);
 
   ProfileContext *getContext(bool pop);
@@ -170,29 +168,12 @@ void ISPCProfileEnd(int region_type, int end_line) {
   ctx->popRegion(state, end_line);
 }
 
-void ISPCProfileIteration(const char *note, int line, int64_t mask, 
+void ISPCProfileUpdate(const char *note, int line, int64_t mask, 
     int region_type) {
   ProfileContext *ctx = getContext(false);
 
   if (ctx == NULL) {
     //fprintf(stderr, "Error: Profile iteration without context.\n");
-    return;
-  }
-
-  // Skip this type of region if the user doesn't want to profile it.
-  int flags = ctx->getFlags();
-  if ((flags & region_type) == 0) {
-    return;
-  }
-
-  ctx->updateCurrentRegion(note, line, mask);
-}
-
-void ISPCProfileIf(const char *note, int line, int64_t mask, int region_type) {
-  ProfileContext *ctx = getContext(false);
-
-  if (ctx == NULL) {
-    //fprintf(stderr, "Error: Profile if statement without context.\n");
     return;
   }
 

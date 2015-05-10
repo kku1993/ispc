@@ -535,7 +535,7 @@ lEmitIfStatements(FunctionEmitContext *ctx, Stmt *stmts, const char *trueOrFalse
         ctx->StartScope();
     ctx->AddInstrumentationPoint(trueOrFalse);
     
-    ctx->AddProfileIf(trueOrFalse, PROFILE_REGION_IF);
+    ctx->AddProfileUpdate(trueOrFalse, PROFILE_REGION_IF);
  
     stmts->EmitCode(ctx);
     if (dynamic_cast<const StmtList *>(stmts) == NULL) 
@@ -1056,7 +1056,7 @@ void DoStmt::EmitCode(FunctionEmitContext *ctx) const {
         ctx->StartScope();
 
     ctx->AddInstrumentationPoint("do loop body");
-    ctx->AddProfileIteration("do loop body", PROFILE_REGION_LOOP); 
+    ctx->AddProfileUpdate("do loop body", PROFILE_REGION_LOOP); 
 
     if (doCoherentCheck && !uniformTest) {
         // Check to see if the mask is all on
@@ -1263,7 +1263,7 @@ ForStmt::EmitCode(FunctionEmitContext *ctx) const {
     ctx->SetCurrentBasicBlock(bloop);
     ctx->SetBlockEntryMask(ctx->GetFullMask());
     ctx->AddInstrumentationPoint("for loop body");
-    ctx->AddProfileIteration("for loop body", PROFILE_REGION_LOOP);
+    ctx->AddProfileUpdate("for loop body", PROFILE_REGION_LOOP);
     if (!dynamic_cast<StmtList *>(stmts))
         ctx->StartScope();
 
@@ -2028,7 +2028,7 @@ ForeachStmt::EmitCode(FunctionEmitContext *ctx) const {
                               dimVariables[nDims-1]->storagePtr, span);
         ctx->SetContinueTarget(bbFullBodyContinue);
         ctx->AddInstrumentationPoint("foreach loop body (all on)");
-        ctx->AddProfileIteration("foreach loop body (all on)", 
+        ctx->AddProfileUpdate("foreach loop body (all on)", 
             PROFILE_REGION_FOREACH);
         stmts->EmitCode(ctx);
         AssertPos(pos, ctx->GetCurrentBasicBlock() != NULL);
@@ -2090,7 +2090,7 @@ ForeachStmt::EmitCode(FunctionEmitContext *ctx) const {
         ctx->CreateBasicBlock("foreach_masked_continue");
     ctx->SetCurrentBasicBlock(bbMaskedBody); {
         ctx->AddInstrumentationPoint("foreach loop body (masked)");
-        ctx->AddProfileIteration("foreach loop body (masked)", 
+        ctx->AddProfileUpdate("foreach loop body (masked)", 
             PROFILE_REGION_FOREACH);
         ctx->SetContinueTarget(bbMaskedBodyContinue);
         ctx->DisableGatherScatterWarnings();

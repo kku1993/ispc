@@ -48,6 +48,9 @@ Internal API
   - Add a new profile region to the current profile context.
 - `ISPCProfileEnd`
   - Ends the most recent profile region.
+- `ISPCProfileUpdate`
+  - Updates the current region. 
+  - Ex: loop iteration, if branch, switch case
 
 Setup
 =====
