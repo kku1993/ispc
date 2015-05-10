@@ -20,7 +20,7 @@ dirs:
 clean:
 		/bin/rm -rf $(OBJDIR) *~ $(APP_NAME) profile_*
 
-OBJS=$(OBJDIR)/test.o $(OBJDIR)/foo_ispc.o $(OBJDIR)/instrument.o #$(TASKSYS_OBJ)
+OBJS=$(OBJDIR)/test.o $(OBJDIR)/foo_ispc.o
 
 $(APP_NAME): dirs $(OBJS)
 		$(CXX) $(CXXFLAGS) -o $@ $(OBJS) -lm -lpthread

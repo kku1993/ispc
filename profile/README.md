@@ -10,6 +10,11 @@
   - `else if` is treated like `if`. So if the code has the structure `if ... else if ... else ...`, it will be treated as 2 separate `if`, the first one without an `else` clause and the second one with. 
   - Lane usage for each case can be determined from the line number (ie: smaller line number is the true case)
 
+Examples
+========
+- See `examples/profile` for a simple example illustrating the use of the profiler
+- See `examples/*_profile` for examples programs provided by the original ISPC project that are modified to use the profiler.
+
 TODO
 ====
 - Add handler to clean up PCM on exit.
