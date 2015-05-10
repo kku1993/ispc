@@ -60,6 +60,7 @@ class ProfileRegion{
   public:
     ProfileRegion(const char*, int, int, int, uint64_t);
     ~ProfileRegion();
+    void freeRegion();
     void setId(rid_t);
     void enterRegion(SystemCounterState *enter_state);
     void exitRegion(SystemCounterState *exit_state, int end_line);

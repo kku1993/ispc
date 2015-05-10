@@ -48,7 +48,12 @@ ProfileRegion::ProfileRegion(const char *fn, int region_type, int start_line,
 }
 
 ProfileRegion::~ProfileRegion() {
+  // Don't free things since we might re-use this region. 
+}
+
+void ProfileRegion::freeRegion() {
   this->laneUsageMap.clear();
+  this->fullMaskMap.clear();
 }
 
 void ProfileRegion::setId(rid_t id) {
@@ -281,6 +286,8 @@ void ProfileContext::outputProfile() {
     char comma = this->old_regions.end() == next(it) ? ' ' : ',';
     ProfileRegion *r = it->second;
     fprintf(fp, "%s%c\n", r->outputJSON().c_str(), comma);
+
+    r->freeRegion();
   }
   fprintf(fp, "]");
   fprintf(fp, "}");

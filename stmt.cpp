@@ -534,6 +534,8 @@ lEmitIfStatements(FunctionEmitContext *ctx, Stmt *stmts, const char *trueOrFalse
     if (dynamic_cast<StmtList *>(stmts) == NULL)
         ctx->StartScope();
     ctx->AddInstrumentationPoint(trueOrFalse);
+    
+    ctx->AddProfileIf(trueOrFalse, PROFILE_REGION_IF);
  
     stmts->EmitCode(ctx);
     if (dynamic_cast<const StmtList *>(stmts) == NULL) 
@@ -579,9 +581,6 @@ IfStmt::EmitCode(FunctionEmitContext *ctx) const {
 
     ctx->SetDebugPos(pos);
     bool isUniform = testType->IsUniformType();
-
-    ctx->AddProfileIf("", isUniform ? PROFILE_REGION_IF_UNIFORM : 
-        PROFILE_REGION_IF_VARYING);
 
     llvm::Value *testValue = test->GetValue(ctx);
     if (testValue == NULL)

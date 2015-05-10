@@ -544,7 +544,7 @@ void
 FunctionEmitContext::StartUniformIf() {
     controlFlowInfo.push_back(CFInfo::GetIf(true, GetInternalMask()));
     if (g->emitProfile)
-        AddProfileStart("Start Uniform If", PROFILE_REGION_IF_UNIFORM);
+        AddProfileStart("Start Uniform If", PROFILE_REGION_IF);
 }
 
 
@@ -552,7 +552,7 @@ void
 FunctionEmitContext::StartVaryingIf(llvm::Value *oldMask) {
     controlFlowInfo.push_back(CFInfo::GetIf(false, oldMask));
     if (g->emitProfile)
-        AddProfileStart("Start Varying If", PROFILE_REGION_IF_VARYING);
+        AddProfileStart("Start Varying If", PROFILE_REGION_IF);
 }
 
 
@@ -620,8 +620,7 @@ FunctionEmitContext::EndIf() {
     }
 
     if (g->emitProfile) {
-        AddProfileEnd(is_uniform ? PROFILE_REGION_IF_UNIFORM : 
-            PROFILE_REGION_IF_VARYING);
+        AddProfileEnd(PROFILE_REGION_IF);
     }
 }
 
