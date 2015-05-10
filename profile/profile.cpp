@@ -34,6 +34,9 @@ static int task_id_counter = 0;
 // Intel performance monitor
 static PCM *monitor;
 
+// Number of contexts with PCM enabled.
+static int num_contexts_with_pcm = 0;
+
 /*
 static void mask_to_str(uint64_t mask, char *buffer) {
   for (int i = 0; i < num_lanes; i++) {
@@ -51,8 +54,11 @@ ProfileContext *getContext(bool pop) {
   if (pop)
     ctx_map.erase(thread);
 
+  bool using_pcm = (ctx->getFlags() & ISPC_PROFILE_PCM) != 0;
+  num_contexts_with_pcm -= using_pcm ? 1 : 0;
+
   // Clean up PCM 
-  if (ctx_map.size() == 0)
+  if (using_pcm && num_contexts_with_pcm == 0)
     monitor->cleanup();
 
   pthread_mutex_unlock(&ctx_map_lock);
@@ -68,8 +74,11 @@ void ISPCProfileInit(const char *file, int line, int total_lanes, int flags) {
 
   pthread_mutex_lock(&ctx_map_lock);
 
+  if ((flags & ISPC_PROFILE_PCM) != 0)
+    num_contexts_with_pcm++;
+
   // Initialize Intel performance monitor 
-  if (ctx_map.size() == 0) {
+  if (num_contexts_with_pcm == 1) {
     monitor = PCM::getInstance();
 
     PCM::ErrorCode err = monitor->program();
