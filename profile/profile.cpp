@@ -51,15 +51,18 @@ ProfileContext *getContext(bool pop) {
   pthread_mutex_lock(&ctx_map_lock);
 
   ProfileContext *ctx = ctx_map[thread];
-  if (pop)
+
+  if (pop) {
     ctx_map.erase(thread);
 
-  bool using_pcm = (ctx->getFlags() & ISPC_PROFILE_PCM) != 0;
-  num_contexts_with_pcm -= using_pcm ? 1 : 0;
+    bool using_pcm = (ctx->getFlags() & ISPC_PROFILE_PCM) != 0;
+    num_contexts_with_pcm -= using_pcm ? 1 : 0;
 
-  // Clean up PCM 
-  if (using_pcm && num_contexts_with_pcm == 0)
-    monitor->cleanup();
+    // Clean up PCM 
+    if (using_pcm && num_contexts_with_pcm == 0) {
+      monitor->cleanup();
+    }
+  }
 
   pthread_mutex_unlock(&ctx_map_lock);
 
