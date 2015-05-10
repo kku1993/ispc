@@ -292,6 +292,8 @@ void ProfileContext::outputProfile() {
   fprintf(fp, "]");
   fprintf(fp, "}");
 
+  fclose(fp);
+
   this->old_regions.clear();
 }
 
