@@ -61,8 +61,8 @@ export void foo(uniform double arr[], uniform int len) {
   // Test unmask.
   if (a == 0) {
     unmasked {
-      for (int i = 0; i < MIN(8, len); i++) {
-        b += (int) arr[i];
+      for (int i = 0; i < MIN(32, len); i += programCount) {
+        arr[i + programIndex] = b;
       }
     }
   }
