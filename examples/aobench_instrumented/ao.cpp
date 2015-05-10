@@ -32,11 +32,10 @@
 */
 
 #ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
 #define NOMINMAX
 #pragma warning (disable: 4244)
 #pragma warning (disable: 4305)
-// preventing MSVC fopen() deprecation complaints
-#define _CRT_SECURE_NO_DEPRECATE
 #endif
 
 #include <stdio.h>
@@ -52,15 +51,17 @@
 #include <algorithm>
 #include <sys/types.h>
 
+#include "instrument.h"
 #include "ao_instrumented_ispc.h"
 using namespace ispc;
 
-#include "instrument.h"
 #include "../timing.h"
 
 #define NSUBSAMPLES        2
 
-static unsigned int test_iterations;
+extern void ao_serial(int w, int h, int nsubsamples, float image[]);
+
+static unsigned int test_iterations[] = {3, 7, 1};
 static unsigned int width, height;
 static unsigned char *img;
 static float *fimg;
@@ -104,30 +105,69 @@ savePPM(const char *fname, int w, int h)
 }
 
 
-
 int main(int argc, char **argv)
 {
-    if (argc != 4) {
+    if (argc < 3) {
         printf ("%s\n", argv[0]);
-        printf ("Usage: ao [num test iterations] [width] [height]\n");
+        printf ("Usage: ao [width] [height] [ispc iterations] [tasks iterations] [serial iterations]\n");
         getchar();
         exit(-1);
     }
     else {
-        test_iterations = atoi(argv[1]);
-        width = atoi (argv[2]);
-        height = atoi (argv[3]);
+        if (argc == 6) {
+            for (int i = 0; i < 3; i++) {
+                test_iterations[i] = atoi(argv[3 + i]);
+            }
+        }
+        width = atoi (argv[1]);
+        height = atoi (argv[2]);
     }
 
     // Allocate space for output images
     img = new unsigned char[width * height * 3];
     fimg = new float[width * height * 3];
 
-    ao_ispc(width, height, NSUBSAMPLES, fimg);
+    //
+    // Run the ispc path, test_iterations times, and report the minimum
+    // time for any of them.
+    //
+    double minTimeISPC = 1e30;
+    for (unsigned int i = 0; i < test_iterations[0]; i++) {
+        memset((void *)fimg, 0, sizeof(float) * width * height * 3);
+        assert(NSUBSAMPLES == 2);
 
+        reset_and_start_timer();
+        ao_ispc(width, height, NSUBSAMPLES, fimg);
+        double t = get_elapsed_mcycles();
+        printf("@time of ISPC run:\t\t\t[%.3f] million cycles\n", t);
+        minTimeISPC = std::min(minTimeISPC, t);
+    }
+
+    // Report results and save image
+    printf("[aobench ispc]:\t\t\t[%.3f] million cycles (%d x %d image)\n", 
+           minTimeISPC, width, height);
     savePPM("ao-ispc.ppm", width, height); 
 
-    ISPCPrintInstrument();
+    //
+    // Run the ispc + tasks path, test_iterations times, and report the
+    // minimum time for any of them.
+    //
+    double minTimeISPCTasks = 1e30;
+    for (unsigned int i = 0; i < test_iterations[1]; i++) {
+        memset((void *)fimg, 0, sizeof(float) * width * height * 3);
+        assert(NSUBSAMPLES == 2);
+
+        reset_and_start_timer();
+        ao_ispc_tasks(width, height, NSUBSAMPLES, fimg);
+        double t = get_elapsed_mcycles();
+        printf("@time of ISPC + TASKS run:\t\t\t[%.3f] million cycles\n", t);
+        minTimeISPCTasks = std::min(minTimeISPCTasks, t);
+    }
+
+    // Report results and save image
+    printf("[aobench ispc + tasks]:\t\t[%.3f] million cycles (%d x %d image)\n", 
+           minTimeISPCTasks, width, height);
+    savePPM("ao-ispc-tasks.ppm", width, height); 
 
     return 0;
 }
