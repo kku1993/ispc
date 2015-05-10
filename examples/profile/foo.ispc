@@ -32,19 +32,16 @@ export void foo(uniform double arr[], uniform int len) {
   // Testing nested if statements and else if statements.
   if (a == 0) {
     b = 0;
-  } 
-  else {
+  } else {
     if (a == 1) {
       b = 1;
       a = 2;
       d = 2;
-    }
-    else if (a == 2) {
+    } else if (a == 2) {
       b = 2;
       a = 2;
       d = 2;
-    }
-    else {
+    } else {
       b = 3;
       a = 2;
       d = 2;

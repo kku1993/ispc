@@ -1714,6 +1714,8 @@ FunctionEmitContext::AddProfileUpdate(const char *note, int region_type) {
       // Manually adjust the line number for switch because the profile udpate 
       // point is inserted right at the end of the previous case.
       line++;
+    } else if (region_type == PROFILE_REGION_IF) {
+      line++;
     }
     args.push_back(LLVMInt32(line));
     // arg 3: current mask, movmsk'ed down to an int64
