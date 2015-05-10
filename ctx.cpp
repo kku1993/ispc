@@ -1124,6 +1124,8 @@ FunctionEmitContext::EmitDefaultLabel(bool checkMask, SourcePos pos) {
 
     if (checkMask)
         addSwitchMaskCheck(newMask);
+
+    AddProfileUpdate("switch default", PROFILE_REGION_SWITCH);
 }
 
 
@@ -1176,6 +1178,8 @@ FunctionEmitContext::EmitCaseLabel(int value, bool checkMask, SourcePos pos) {
 
     if (checkMask)
         addSwitchMaskCheck(newMask);
+
+    AddProfileUpdate("switch case", PROFILE_REGION_SWITCH);
 }
 
 
@@ -1705,7 +1709,13 @@ FunctionEmitContext::AddProfileUpdate(const char *note, int region_type) {
     // arg 1: provided note
     args.push_back(lGetStringAsValue(bblock, note));
     // arg 2: line number
-    args.push_back(LLVMInt32(currentPos.first_line));
+    int line = currentPos.first_line;
+    if (region_type == PROFILE_REGION_SWITCH) {
+      // Manually adjust the line number for switch because the profile udpate 
+      // point is inserted right at the end of the previous case.
+      line++;
+    }
+    args.push_back(LLVMInt32(line));
     // arg 3: current mask, movmsk'ed down to an int64
     args.push_back(LaneMask(GetFullMask()));
     // arg 4: region type

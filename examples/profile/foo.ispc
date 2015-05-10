@@ -71,14 +71,14 @@ export void foo(uniform double arr[], uniform int len) {
   }
 
   // Test switch
-  switch (b) {
+  switch (programIndex) {
     case 0:
-      b = 1;
+      b = 0;
       break;
     case 1:
-      b = 2;
+      b = 1;
     default:
-      b = 0;
+      b = 3;
       break;
   }
   
